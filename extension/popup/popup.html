@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Focus App</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+  <!-- Экран: нет активной сессии -->
+  <div id="screen-idle" class="screen hidden">
+    <h2 class="app-title">Focus App</h2>
+
+    <div class="section-label">Выбери задачу:</div>
+    <select id="task-select">
+      <option value="">— загрузка —</option>
+    </select>
+
+    <button id="btn-start" class="btn btn-primary" disabled>Начать сессию</button>
+
+    <div id="idle-error" class="error hidden"></div>
+
+    <a class="manage-link" href="http://localhost:5173/tasks" target="_blank">
+      Управление задачами →
+    </a>
+  </div>
+
+  <!-- Экран: сессия активна -->
+  <div id="screen-active" class="screen hidden">
+    <div class="status-badge">● В фокусе</div>
+
+    <div class="task-name" id="active-task-name"></div>
+
+    <div class="timer" id="timer">00:00</div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-value" id="blocked-count">0</span>
+        <span class="stat-label">блокировок</span>
+      </div>
+    </div>
+
+    <button id="btn-stop" class="btn btn-danger">Завершить</button>
+
+    <div id="active-error" class="error hidden"></div>
+  </div>
+
+  <!-- Экран: результат после завершения -->
+  <div id="screen-result" class="screen hidden">
+    <div class="result-title">Сессия завершена</div>
+
+    <div class="score-wrap">
+      <span class="score-value" id="result-score">—</span>
+      <span class="score-label">focus score</span>
+    </div>
+
+    <div class="result-stats">
+      <div>Длительность: <strong id="result-duration">—</strong></div>
+      <div>Блокировок: <strong id="result-blocked">—</strong></div>
+    </div>
+
+    <button id="btn-new" class="btn btn-primary">Новая сессия</button>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

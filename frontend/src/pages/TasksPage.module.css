@@ -1,0 +1,160 @@
+.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.center {
+  text-align: center;
+  margin-top: 80px;
+  color: #6b7280;
+}
+
+.header { border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; }
+
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.error {
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 40px 0;
+}
+
+/* ── Форма создания ───────────────────────── */
+.createForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* ── Список задач ─────────────────────────── */
+.taskList { display: flex; flex-direction: column; gap: 12px; }
+
+.taskCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.taskTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.taskTitle { font-weight: 600; font-size: 15px; }
+.taskDesc { font-size: 13px; color: #6b7280; margin-top: 2px; }
+
+.taskActions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ── Whitelist ────────────────────────────── */
+.whitelist {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.whitelistTitle { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+.whitelistEmpty { font-size: 13px; color: #9ca3af; }
+
+.domainList { display: flex; flex-direction: column; gap: 6px; }
+
+.domainRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f9fafb;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.domain { font-size: 13px; font-weight: 500; flex: 1; }
+.label { font-size: 12px; color: #9ca3af; }
+
+.addDomain { display: flex; gap: 8px; flex-wrap: wrap; }
+.addDomain .input { flex: 1; min-width: 120px; }
+
+/* ── Инпуты и кнопки ─────────────────────── */
+.input {
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+}
+
+.input:focus { border-color: #2563eb; }
+
+.btnPrimary {
+  padding: 8px 16px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btnPrimary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btnPrimary:not(:disabled):hover { opacity: 0.85; }
+
+.btnSecondary {
+  padding: 6px 12px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.btnSecondary:hover { background: #e5e7eb; }
+
+.btnDanger {
+  padding: 6px 10px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.btnDanger:hover { background: #fee2e2; }
+
+.btnRemove {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 12px;
+  padding: 2px 4px;
+  margin-left: auto;
+}
+
+.btnRemove:hover { color: #dc2626; }

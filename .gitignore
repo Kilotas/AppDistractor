@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Env
+.env
+!.env.example
+
+# DB
+*.db
+*.sqlite3
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Docker
+graphify-out/
+
+# IDE
+.idea/
+.vscode/
