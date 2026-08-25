@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Session } from "../api/client";
 import { useT } from "../i18n";
+import LangToggle from "../components/LangToggle";
 import styles from "./SessionsPage.module.css";
 
 function ScoreBadge({ score }: { score: number | null }) {
@@ -53,6 +54,7 @@ export default function SessionsPage() {
       <header className={styles.header}>
         <button className={styles.back} onClick={() => navigate("/tasks")}>{t("backToTasks")}</button>
         <h1 className={styles.title}>{t("sessionHistory")}</h1>
+        <LangToggle />
       </header>
 
       {error && <div className={styles.error}>{error}</div>}

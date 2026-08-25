@@ -12,16 +12,16 @@
     <h2 class="app-title">FocusVoid</h2>
 
     <div id="auth-tabs" class="auth-tabs">
-      <button class="auth-tab active" data-tab="login">Войти</button>
-      <button class="auth-tab" data-tab="register">Регистрация</button>
+      <button class="auth-tab active" data-tab="login" data-i18n="tabLogin"></button>
+      <button class="auth-tab" data-tab="register" data-i18n="tabRegister"></button>
     </div>
 
     <input id="auth-email" type="email" class="input" placeholder="Email" />
-    <input id="auth-password" type="password" class="input" placeholder="Пароль" />
-    <input id="auth-confirm" type="password" class="input hidden" placeholder="Подтвердите пароль" />
-    <p id="auth-hint" class="auth-hint hidden">Мин. 8 символов, заглавная и строчная буква, цифра</p>
+    <input id="auth-password" type="password" class="input" data-i18n-placeholder="placeholderPassword" />
+    <input id="auth-confirm" type="password" class="input hidden" data-i18n-placeholder="placeholderConfirm" />
+    <p id="auth-hint" class="auth-hint hidden" data-i18n="authHint"></p>
 
-    <button id="btn-auth-submit" class="btn btn-primary">Войти</button>
+    <button id="btn-auth-submit" class="btn btn-primary" data-i18n="btnLogin"></button>
     <div id="auth-error" class="error hidden"></div>
   </div>
 
@@ -29,9 +29,9 @@
   <div id="screen-idle" class="screen hidden">
     <h2 class="app-title">FocusVoid</h2>
 
-    <div class="section-label">Выбери задачу:</div>
+    <div class="section-label" data-i18n="chooseTask"></div>
     <select id="task-select">
-      <option value="">— загрузка —</option>
+      <option value="" data-i18n="loading"></option>
     </select>
 
     <div class="pomo-row">
@@ -40,31 +40,31 @@
         <span class="pomo-knob"></span>
       </label>
       <div class="pomo-info">
-        <div class="pomo-label">Помодоро</div>
-        <div class="pomo-hint" id="pomo-hint">25 мин фокус · 5 мин перерыв</div>
+        <div class="pomo-label" data-i18n="pomoLabel"></div>
+        <div class="pomo-hint" id="pomo-hint"></div>
       </div>
     </div>
 
     <div class="pomo-settings hidden" id="pomo-settings">
       <div class="pomo-setting">
-        <span class="pomo-setting-label">Фокус</span>
+        <span class="pomo-setting-label" data-i18n="labelFocus"></span>
         <div class="pomo-setting-input">
           <input type="number" id="pomo-focus" min="1" max="120" value="25">
-          <span>мин</span>
+          <span data-i18n="labelMin"></span>
         </div>
       </div>
       <div class="pomo-setting">
-        <span class="pomo-setting-label">Перерыв</span>
+        <span class="pomo-setting-label" data-i18n="labelBreak"></span>
         <div class="pomo-setting-input">
           <input type="number" id="pomo-break" min="1" max="60" value="5">
-          <span>мин</span>
+          <span data-i18n="labelMin"></span>
         </div>
       </div>
       <div class="pomo-setting">
-        <span class="pomo-setting-label">Длинный</span>
+        <span class="pomo-setting-label" data-i18n="labelLong"></span>
         <div class="pomo-setting-input">
           <input type="number" id="pomo-long" min="1" max="120" value="15">
-          <span>мин</span>
+          <span data-i18n="labelMin"></span>
         </div>
       </div>
     </div>
@@ -75,19 +75,17 @@
         <span class="pomo-knob"></span>
       </label>
       <div class="pomo-info">
-        <div class="pomo-label">Звуки</div>
-        <div class="pomo-hint">при смене фаз и завершении</div>
+        <div class="pomo-label" data-i18n="soundsLabel"></div>
+        <div class="pomo-hint" data-i18n="soundsHint"></div>
       </div>
     </div>
 
-    <button id="btn-start" class="btn btn-primary" disabled>Начать сессию</button>
+    <button id="btn-start" class="btn btn-primary" disabled data-i18n="btnStart"></button>
     <div id="idle-error" class="error hidden"></div>
 
     <div class="bottom-row">
-      <a class="manage-link" href="http://localhost:5173/tasks" target="_blank">
-        Управление задачами →
-      </a>
-      <button id="btn-logout" class="btn-link">Выйти</button>
+      <a class="manage-link" href="http://localhost:5173/tasks" target="_blank" data-i18n="manageTasks"></a>
+      <button id="btn-logout" class="btn-link" data-i18n="btnLogout"></button>
     </div>
   </div>
 
@@ -95,7 +93,7 @@
   <div id="screen-active" class="screen hidden">
 
     <div class="active-header">
-      <div class="phase-badge" id="phase-badge">● В ФОКУСЕ</div>
+      <div class="phase-badge" id="phase-badge"></div>
       <div class="task-name" id="active-task-name"></div>
     </div>
 
@@ -121,27 +119,25 @@
     <div class="active-stats">
       <div class="stat">
         <span class="stat-value red" id="blocked-count">0</span>
-        <span class="stat-label">блокировок</span>
+        <span class="stat-label" data-i18n="labelBlocks"></span>
       </div>
       <div class="stat hidden" id="stat-pomo">
         <span class="stat-value purple" id="pomo-done">0</span>
-        <span class="stat-label">помидоров</span>
+        <span class="stat-label" data-i18n="labelPomos"></span>
       </div>
     </div>
 
-    <button id="btn-stop" class="btn btn-danger">Завершить</button>
+    <button id="btn-stop" class="btn btn-danger" data-i18n="btnStop"></button>
     <div id="active-error" class="error hidden">
       <div style="margin-top:6px">
-        <button id="btn-force-stop" class="btn-link" style="color:#f87171;font-size:11px">
-          Принудительно завершить →
-        </button>
+        <button id="btn-force-stop" class="btn-link" style="color:#f87171;font-size:11px" data-i18n="btnForceStop"></button>
       </div>
     </div>
   </div>
 
   <!-- Экран: результат после завершения -->
   <div id="screen-result" class="screen hidden">
-    <div class="result-title">Сессия завершена</div>
+    <div class="result-title" data-i18n="resultTitle"></div>
 
     <div class="score-wrap">
       <span class="score-value" id="result-score">—</span>
@@ -149,12 +145,12 @@
     </div>
 
     <div class="result-stats">
-      <div>Длительность: <strong id="result-duration">—</strong></div>
-      <div>Блокировок: <strong id="result-blocked">—</strong></div>
-      <div class="hidden" id="result-pomo-row">Помидоров: <strong id="result-pomos">—</strong> 🍅</div>
+      <div><span data-i18n="resultDuration"></span> <strong id="result-duration">—</strong></div>
+      <div><span data-i18n="resultBlocked"></span> <strong id="result-blocked">—</strong></div>
+      <div class="hidden" id="result-pomo-row"><span data-i18n="resultPomos"></span> <strong id="result-pomos">—</strong> 🍅</div>
     </div>
 
-    <button id="btn-new" class="btn btn-primary">Новая сессия</button>
+    <button id="btn-new" class="btn btn-primary" data-i18n="btnNewSession"></button>
   </div>
 
   <script src="popup.js" type="module"></script>

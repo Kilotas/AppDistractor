@@ -34,7 +34,7 @@ def _build_html(link: str) -> str:
 async def _send_via_yandex(to_email: str, subject: str, html: str) -> None:
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = settings.YANDEX_SMTP_FROM
+    msg["From"] = f"FocusVoid <{settings.YANDEX_SMTP_FROM}>"
     msg["To"] = to_email
     msg.attach(MIMEText(html, "html", "utf-8"))
 

@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { api } from "../api/client";
 import type { SessionStats } from "../api/client";
 import { useT } from "../i18n";
+import LangToggle from "../components/LangToggle";
 import styles from "./StatsPage.module.css";
 
 export default function StatsPage() {
@@ -47,6 +48,7 @@ export default function StatsPage() {
       <header className={styles.header}>
         <button className={styles.back} onClick={() => navigate(-1)}>{t("back")}</button>
         <h1 className={styles.title}>{t("sessionStats")} #{sessionId}</h1>
+        <LangToggle />
       </header>
 
       <div className={styles.cards}>

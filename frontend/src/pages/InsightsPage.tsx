@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../api/client";
 import type { TaskInsights } from "../api/client";
 import { useT } from "../i18n";
+import LangToggle from "../components/LangToggle";
 import styles from "./InsightsPage.module.css";
 
 export default function InsightsPage() {
@@ -47,6 +48,7 @@ export default function InsightsPage() {
         <header className={styles.header}>
           <button className={styles.back} onClick={() => navigate(-1)}>{t("back")}</button>
           <h1 className={styles.title}>{t("aiTitle")}</h1>
+          <LangToggle />
         </header>
         <div className={styles.paywall}>
           <div className={styles.paywallIcon}>🔒</div>
@@ -75,6 +77,7 @@ export default function InsightsPage() {
       <header className={styles.header}>
         <button className={styles.back} onClick={() => navigate(-1)}>{t("back")}</button>
         <h1 className={styles.title}>{t("aiTitle")}</h1>
+        <LangToggle />
       </header>
 
       <div className={styles.cards}>

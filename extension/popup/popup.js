@@ -1,6 +1,18 @@
 import { login, register } from "../api.js";
 import { playStart, playBreak, playResume, playComplete } from "../sounds.js";
 
+// ── i18n ───────────────────────────────────────────────
+const i18n = (key, ...subs) => chrome.i18n.getMessage(key, subs) || key;
+
+function applyI18n() {
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = i18n(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    el.placeholder = i18n(el.dataset.i18nPlaceholder);
+  });
+}
+
 // ── Pomodoro ───────────────────────────────────────────
 let POMO = { focus: 25 * 60, break: 5 * 60, longBreak: 15 * 60 };
 const RING_C = 314.16; // 2π × r(50)
@@ -125,7 +137,7 @@ function updatePomoDots() {
 function updatePhaseUI() {
   if (!pomo) return;
   const isFocus = pomo.phase === "focus";
-  els.phaseBadge.textContent = isFocus ? "● ФОКУС" : "● ПЕРЕРЫВ";
+  els.phaseBadge.textContent = isFocus ? i18n("phaseFocus") : i18n("phaseBreak");
   els.phaseBadge.className = isFocus ? "phase-badge" : "phase-badge break";
   els.timer.textContent = formatDuration(pomo.remaining);
   updatePomoDots();
@@ -161,15 +173,15 @@ function handlePhaseEnd() {
     pomo.phase = "break";
     pomo.phaseTotal = isLong ? POMO.longBreak : POMO.break;
     pomo.remaining = pomo.phaseTotal;
-    notify(isLong ? "🎉 Длинный перерыв!" : "☕ Перерыв!", isLong
-      ? "15 минут отдыха — ты заслужил."
-      : "5 минут. Встань, разомнись.");
+    notify(isLong ? i18n("notifyLongTitle") : i18n("notifyBreakTitle"), isLong
+      ? i18n("notifyLongMsg")
+      : i18n("notifyBreakMsg"));
     playBreak();
   } else {
     pomo.phase = "focus";
     pomo.phaseTotal = POMO.focus;
     pomo.remaining = POMO.focus;
-    notify("🚀 Время работать!", "Перерыв закончился. Вперёд!");
+    notify(i18n("notifyFocusTitle"), i18n("notifyFocusMsg"));
     playResume();
   }
   updatePhaseUI();
@@ -214,10 +226,10 @@ function stopTimer() {
 // ── Auth ───────────────────────────────────────────────
 
 function validatePassword(password) {
-  if (password.length < 8) return "Минимум 8 символов";
-  if (!/[A-Z]/.test(password)) return "Нужна заглавная буква";
-  if (!/[a-z]/.test(password)) return "Нужна строчная буква";
-  if (!/\d/.test(password)) return "Нужна цифра";
+  if (password.length < 8) return i18n("errPwdMin");
+  if (!/[A-Z]/.test(password)) return i18n("errPwdUpper");
+  if (!/[a-z]/.test(password)) return i18n("errPwdLower");
+  if (!/d/.test(password)) return i18n("errPwdDigit");
   return null;
 }
 
@@ -227,7 +239,7 @@ els.authTabs.forEach(tab => {
   tab.addEventListener("click", () => {
     authMode = tab.dataset.tab;
     els.authTabs.forEach(t => t.classList.toggle("active", t.dataset.tab === authMode));
-    els.btnAuthSubmit.textContent = authMode === "login" ? "Войти" : "Зарегистрироваться";
+    els.btnAuthSubmit.textContent = authMode === "login" ? i18n("btnLogin") : i18n("btnRegister");
     els.authConfirm.classList.toggle("hidden", authMode === "login");
     els.authHint.classList.toggle("hidden", authMode === "login");
     els.authPassword.value = "";
@@ -241,12 +253,12 @@ els.btnAuthSubmit.addEventListener("click", async () => {
   const password = els.authPassword.value;
   const confirmPassword = els.authConfirm.value;
 
-  if (!email || !password) { showError(els.authError, "Заполни email и пароль"); return; }
+  if (!email || !password) { showError(els.authError, i18n("errFillFields")); return; }
 
   if (authMode === "register") {
     const pwdError = validatePassword(password);
     if (pwdError) { showError(els.authError, pwdError); return; }
-    if (password !== confirmPassword) { showError(els.authError, "Пароли не совпадают"); return; }
+    if (password !== confirmPassword) { showError(els.authError, i18n("errPwdMismatch")); return; }
   }
 
   els.btnAuthSubmit.disabled = true;
@@ -284,7 +296,7 @@ els.pomoCheck.addEventListener("change", () => {
 function updatePomoHint() {
   const f = parseInt(els.pomoFocus.value) || 25;
   const b = parseInt(els.pomoBreak.value) || 5;
-  els.pomoHint.textContent = `${f} мин фокус · ${b} мин перерыв`;
+  els.pomoHint.textContent = i18n("pomoHint", String(f), String(b));
 }
 
 [els.pomoFocus, els.pomoBreak, els.pomoLong].forEach(input => {
@@ -320,13 +332,13 @@ async function showIdleScreen() {
     const tasks = await send("GET_TASKS");
     els.taskSelect.innerHTML = tasks.length
       ? tasks.map(t => `<option value="${t.id}">${t.title}</option>`).join("")
-      : `<option value="">Нет активных задач</option>`;
+      : `<option value="">${i18n("errNoTasks")}</option>`;
     els.btnStart.disabled = tasks.length === 0;
   } catch (err) {
     if (err.message.includes("авторизован") || err.message.includes("Сессия истекла")) {
       showScreen("auth");
     } else {
-      showError(els.idleError, `Не удалось загрузить задачи: ${err.message}`);
+      showError(els.idleError, `${i18n("errLoadTasks")} ${err.message}`);
     }
   }
 }
@@ -337,7 +349,7 @@ async function showActiveScreen(sessionData) {
   showScreen("active");
   hideError(els.activeError);
 
-  els.activeTaskName.textContent = sessionData.taskTitle ?? `Задача #${sessionData.taskId}`;
+  els.activeTaskName.textContent = sessionData.taskTitle ?? i18n("taskFallback", String(sessionData.taskId));
   els.blockedCount.textContent = sessionData.blockedAttempts ?? 0;
 
   const pomoEnabled = !!pomo;
@@ -347,7 +359,7 @@ async function showActiveScreen(sessionData) {
   if (pomo) {
     updatePhaseUI();
   } else {
-    els.phaseBadge.textContent = "● В ФОКУСЕ";
+    els.phaseBadge.textContent = i18n("phaseActive");
     els.phaseBadge.className = "phase-badge";
   }
 
@@ -451,6 +463,7 @@ els.btnLogout.addEventListener("click", async () => {
 // ── Инициализация ──────────────────────────────────────
 
 async function init() {
+  applyI18n();
   const { authToken } = await chrome.storage.local.get("authToken");
   if (!authToken) { showScreen("auth"); return; }
 

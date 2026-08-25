@@ -22,6 +22,28 @@
   --warning:         #fbbf24;
 }
 
+[data-theme="light"] {
+  --bg:              #f0f4ff;
+  --surface:         #ffffff;
+  --surface-2:       #e8edf8;
+  --surface-hover:   #dde4f5;
+  --border:          #c8d3ea;
+  --border-2:        #b0bdd8;
+  --text:            #0f1829;
+  --text-2:          #3d4f6e;
+  --text-muted:      #7a8fad;
+  --accent:          #4f7df9;
+  --accent-hover:    #3a6ae0;
+  --accent-dim:      #dde8ff;
+  --accent-border:   #b3c8ff;
+  --accent-text:     #2a5bd7;
+  --error:           #dc2626;
+  --error-bg:        #fee2e2;
+  --error-hover-bg:  #fecaca;
+  --success:         #16a34a;
+  --warning:         #d97706;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 14px;

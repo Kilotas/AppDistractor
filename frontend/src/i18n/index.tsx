@@ -1,8 +1,10 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 
 export type Lang = "ru" | "en";
+export type Theme = "dark" | "light";
 
 const LANG_KEY = "focus_lang";
+const THEME_KEY = "focus_theme";
 
 const translations = {
   ru: {
@@ -204,6 +206,8 @@ interface LanguageContextValue {
   setLang: (l: Lang) => void;
   t: (key: TranslationKey) => string;
   locale: string;
+  theme: Theme;
+  setTheme: (t: Theme) => void;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -212,10 +216,23 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>(
     () => (localStorage.getItem(LANG_KEY) as Lang) ?? "ru"
   );
+  const [theme, setThemeState] = useState<Theme>(
+    () => (localStorage.getItem(THEME_KEY) as Theme) ?? "dark"
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   const setLang = useCallback((l: Lang) => {
     localStorage.setItem(LANG_KEY, l);
     setLangState(l);
+  }, []);
+
+  const setTheme = useCallback((t: Theme) => {
+    localStorage.setItem(THEME_KEY, t);
+    setThemeState(t);
+    document.documentElement.setAttribute("data-theme", t);
   }, []);
 
   const t = useCallback(
@@ -226,7 +243,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const locale = lang === "ru" ? "ru-RU" : "en-US";
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t, locale }}>
+    <LanguageContext.Provider value={{ lang, setLang, t, locale, theme, setTheme }}>
       {children}
     </LanguageContext.Provider>
   );
