@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, clearToken, isGuest } from "../api/client";
 import type { Task, WhitelistEntry, StreakStats, DailyActivity, Subtask } from "../api/client";
+import { useT } from "../i18n";
+import LangToggle from "../components/LangToggle";
 import styles from "./TasksPage.module.css";
 
 function heatmapLevel(minutes: number): number {
@@ -11,12 +13,13 @@ function heatmapLevel(minutes: number): number {
   return 3;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
-}
-
 export default function TasksPage() {
   const navigate = useNavigate();
+  const { t, locale } = useT();
+
+  function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString(locale, { day: "numeric", month: "short" });
+  }
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -180,18 +183,21 @@ export default function TasksPage() {
     }
   }
 
-  if (loading) return <div className={styles.center}>Загрузка...</div>;
+  if (loading) return <div className={styles.center}>{t("loading")}</div>;
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>FocusVoid</h1>
-        <button
-          className={styles.logoutBtn}
-          onClick={() => { clearToken(); navigate("/login"); }}
-        >
-          Выйти
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <LangToggle />
+          <button
+            className={styles.logoutBtn}
+            onClick={() => { clearToken(); navigate("/login"); }}
+          >
+            {t("logout")}
+          </button>
+        </div>
       </header>
 
       {error && <div className={styles.error}>{error}</div>}
@@ -210,10 +216,10 @@ export default function TasksPage() {
         }}>
           <div>
             <span style={{ color: "var(--text)", fontSize: 14, fontWeight: 500 }}>
-              Гостевой режим
+              {t("guestMode")}
             </span>
             <span style={{ color: "var(--text-muted)", fontSize: 13, marginLeft: 8 }}>
-              Данные не сохранятся после выхода
+              {t("guestDesc")}
             </span>
           </div>
           <button
@@ -224,7 +230,7 @@ export default function TasksPage() {
               fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
             }}
           >
-            Зарегистрироваться
+            {t("registerNow")}
           </button>
         </div>
       )}
@@ -234,17 +240,17 @@ export default function TasksPage() {
         <div className={styles.streakWidget}>
           <div className={styles.streakStat}>
             <div className={styles.streakValue}>🔥 {streak.current_streak}</div>
-            <div className={styles.streakLabel}>текущий стрик</div>
+            <div className={styles.streakLabel}>{t("currentStreak")}</div>
           </div>
           <div className={styles.streakDivider} />
           <div className={styles.streakStat}>
             <div className={styles.streakValue}>{streak.longest_streak}</div>
-            <div className={styles.streakLabel}>лучшая серия</div>
+            <div className={styles.streakLabel}>{t("longestStreak")}</div>
           </div>
           <div className={styles.streakDivider} />
           <div className={styles.streakStat}>
             <div className={styles.streakValue}>{streak.total_days_active}</div>
-            <div className={styles.streakLabel}>всего дней</div>
+            <div className={styles.streakLabel}>{t("totalDays")}</div>
           </div>
         </div>
       )}
@@ -252,23 +258,23 @@ export default function TasksPage() {
       {/* Heatmap */}
       {daily.length > 0 && (
         <div className={styles.heatmapCard}>
-          <div className={styles.heatmapTitle}>Активность за 30 дней</div>
+          <div className={styles.heatmapTitle}>{t("activityTitle")}</div>
           <div className={styles.heatmapGrid}>
             {daily.map((d) => (
               <div
                 key={d.date}
                 className={`${styles.heatmapCell} ${styles[`heatmapLevel${heatmapLevel(d.focus_minutes)}`]}`}
-                title={`${formatDate(d.date)}: ${d.focus_minutes} мин, ${d.sessions_count} сессий`}
+                title={`${formatDate(d.date)}: ${d.focus_minutes} ${locale === "ru-RU" ? "мин" : "min"}, ${d.sessions_count} ${locale === "ru-RU" ? "сессий" : "sessions"}`}
               />
             ))}
           </div>
           <div className={styles.heatmapLegend}>
-            <span>меньше</span>
+            <span>{t("heatmapLess")}</span>
             <div className={`${styles.heatmapCell} ${styles.heatmapLevel0}`} />
             <div className={`${styles.heatmapCell} ${styles.heatmapLevel1}`} />
             <div className={`${styles.heatmapCell} ${styles.heatmapLevel2}`} />
             <div className={`${styles.heatmapCell} ${styles.heatmapLevel3}`} />
-            <span>больше</span>
+            <span>{t("heatmapMore")}</span>
           </div>
         </div>
       )}
@@ -277,24 +283,24 @@ export default function TasksPage() {
       <form className={styles.createForm} onSubmit={createTask}>
         <input
           className={styles.input}
-          placeholder="Название задачи"
+          placeholder={t("taskPlaceholder")}
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
         />
         <input
           className={styles.input}
-          placeholder="Описание (необязательно)"
+          placeholder={t("descPlaceholder")}
           value={newDesc}
           onChange={(e) => setNewDesc(e.target.value)}
         />
         <button className={styles.btnPrimary} disabled={creating || !newTitle.trim()}>
-          {creating ? "Создаю..." : "Создать задачу"}
+          {creating ? t("creating") : t("createTask")}
         </button>
       </form>
 
       {/* Список задач */}
       {tasks.length === 0 ? (
-        <div className={styles.empty}>Задач пока нет — создай первую</div>
+        <div className={styles.empty}>{t("noTasks")}</div>
       ) : (
         <div className={styles.taskList}>
           {tasks.map((task) => (
@@ -311,19 +317,19 @@ export default function TasksPage() {
                     className={styles.btnSecondary}
                     onClick={() => navigate(`/tasks/${task.id}/sessions`)}
                   >
-                    История
+                    {t("btnSessions")}
                   </button>
                   <button
                     className={styles.btnSecondary}
                     onClick={() => toggleSubtasks(task.id)}
                   >
-                    {openSubtasks === task.id ? "Скрыть" : "Чеклист"}
+                    {t("btnChecklist")}
                   </button>
                   <button
                     className={styles.btnSecondary}
                     onClick={() => toggleWhitelist(task.id)}
                   >
-                    {openWhitelist === task.id ? "Скрыть" : "Whitelist"}
+                    Whitelist
                   </button>
                   <button
                     className={styles.btnDanger}
@@ -338,7 +344,7 @@ export default function TasksPage() {
               {openSubtasks === task.id && (
                 <div className={styles.subtasks}>
                   <div className={styles.subtasksHeader}>
-                    <span className={styles.subtasksTitle}>Подзадачи</span>
+                    <span className={styles.subtasksTitle}>{t("btnChecklist")}</span>
                     {subtasks.length > 0 && (
                       <span className={styles.subtasksCount}>
                         {subtasks.filter((s) => s.is_completed).length}/{subtasks.length}
@@ -347,7 +353,7 @@ export default function TasksPage() {
                   </div>
 
                   {subtasks.length === 0 ? (
-                    <div className={styles.subtasksEmpty}>Нет подзадач — добавь первую</div>
+                    <div className={styles.subtasksEmpty}>{t("noTasks")}</div>
                   ) : (
                     <div className={styles.subtaskList}>
                       {subtasks.map((s) => (
@@ -395,7 +401,7 @@ export default function TasksPage() {
                   <div className={styles.addSubtask}>
                     <input
                       className={styles.input}
-                      placeholder="Новая подзадача..."
+                      placeholder={t("newSubtask")}
                       value={newSubtask}
                       onChange={(e) => setNewSubtask(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && addSubtask(task.id)}
@@ -414,10 +420,10 @@ export default function TasksPage() {
               {/* Whitelist */}
               {openWhitelist === task.id && (
                 <div className={styles.whitelist}>
-                  <div className={styles.whitelistTitle}>Разрешённые домены</div>
+                  <div className={styles.whitelistTitle}>{locale === "ru-RU" ? "Разрешённые домены" : "Allowed domains"}</div>
 
                   {whitelist.length === 0 ? (
-                    <div className={styles.whitelistEmpty}>Список пуст — все сайты будут заблокированы</div>
+                    <div className={styles.whitelistEmpty}>{locale === "ru-RU" ? "Список пуст — все сайты будут заблокированы" : "Empty — all sites will be blocked"}</div>
                   ) : (
                     <div className={styles.domainList}>
                       {whitelist.map((entry) => (
@@ -445,7 +451,7 @@ export default function TasksPage() {
                     />
                     <input
                       className={styles.input}
-                      placeholder="Подпись (необязательно)"
+                      placeholder={locale === "ru-RU" ? "Подпись (необязательно)" : "Label (optional)"}
                       value={newLabel}
                       onChange={(e) => setNewLabel(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && addDomain(task.id)}
@@ -455,7 +461,7 @@ export default function TasksPage() {
                       onClick={() => addDomain(task.id)}
                       disabled={!newDomain.trim()}
                     >
-                      Добавить
+                      {t("addSubtask")}
                     </button>
                   </div>
                 </div>

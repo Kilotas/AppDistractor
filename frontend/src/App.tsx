@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { getToken } from "./api/client";
+import { LanguageProvider } from "./i18n";
 import LoginPage from "./pages/LoginPage";
 import VerifyPage from "./pages/VerifyPage";
 import TasksPage from "./pages/TasksPage";
@@ -14,6 +15,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <LanguageProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -25,5 +27,6 @@ export default function App() {
         <Route path="/tasks/:taskId/insights" element={<RequireAuth><InsightsPage /></RequireAuth>} />
       </Routes>
     </BrowserRouter>
+    </LanguageProvider>
   );
 }

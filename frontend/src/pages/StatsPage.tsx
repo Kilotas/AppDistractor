@@ -3,11 +3,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { api } from "../api/client";
 import type { SessionStats } from "../api/client";
+import { useT } from "../i18n";
 import styles from "./StatsPage.module.css";
 
 export default function StatsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
+  const { t, locale } = useT();
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,69 +21,66 @@ export default function StatsPage() {
       .finally(() => setLoading(false));
   }, [sessionId]);
 
-  if (loading) return <div className={styles.center}>Загрузка...</div>;
+  if (loading) return <div className={styles.center}>{t("loading")}</div>;
   if (error) return <div className={styles.center + " " + styles.error}>{error}</div>;
   if (!stats) return null;
 
-  // Готовим данные для графика — сортируем по минуте
   const chartData = Object.entries(stats.blocked_per_minute)
     .map(([minute, count]) => ({ minute: Number(minute), count }))
     .sort((a, b) => a.minute - b.minute);
 
-  // Находим пиковую минуту
   const peakMinute = chartData.reduce(
     (max, d) => (d.count > max.count ? d : max),
     { minute: 0, count: 0 }
   );
 
+  const durLabel = stats.duration_minutes !== null
+    ? (locale === "ru-RU" ? `${stats.duration_minutes}м` : `${stats.duration_minutes}m`)
+    : "—";
+
+  const peakLabel = peakMinute.count > 0
+    ? (locale === "ru-RU" ? `${peakMinute.minute}м` : `${peakMinute.minute}m`)
+    : "—";
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <button className={styles.back} onClick={() => navigate(-1)}>← Назад</button>
-        <h1 className={styles.title}>Статистика сессии #{sessionId}</h1>
+        <button className={styles.back} onClick={() => navigate(-1)}>{t("back")}</button>
+        <h1 className={styles.title}>{t("sessionStats")} #{sessionId}</h1>
       </header>
 
-      {/* Карточки с цифрами */}
       <div className={styles.cards}>
         <div className={styles.card}>
           <div className={styles.cardValue}>{stats.total_blocked}</div>
-          <div className={styles.cardLabel}>всего блокировок</div>
+          <div className={styles.cardLabel}>{t("totalBlocks")}</div>
         </div>
         <div className={styles.card}>
-          <div className={styles.cardValue}>
-            {stats.duration_minutes !== null ? `${stats.duration_minutes}м` : "—"}
-          </div>
-          <div className={styles.cardLabel}>длительность</div>
+          <div className={styles.cardValue}>{durLabel}</div>
+          <div className={styles.cardLabel}>{t("duration")}</div>
         </div>
         <div className={styles.card}>
-          <div className={styles.cardValue}>
-            {peakMinute.count > 0 ? `${peakMinute.minute}м` : "—"}
-          </div>
-          <div className={styles.cardLabel}>пик отвлечений</div>
+          <div className={styles.cardValue}>{peakLabel}</div>
+          <div className={styles.cardLabel}>{t("peakDistraction")}</div>
         </div>
       </div>
 
-      {/* График блокировок по минутам */}
       <div className={styles.section}>
-        <div className={styles.sectionTitle}>Блокировки по минутам</div>
+        <div className={styles.sectionTitle}>{t("blocksByMinute")}</div>
         {chartData.length === 0 ? (
-          <div className={styles.empty}>Нет данных</div>
+          <div className={styles.empty}>{t("noData")}</div>
         ) : (
           <div className={styles.chart}>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <XAxis
                   dataKey="minute"
-                  tickFormatter={(v) => `${v}м`}
+                  tickFormatter={(v) => locale === "ru-RU" ? `${v}м` : `${v}m`}
                   tick={{ fontSize: 11, fill: "#9ca3af" }}
                 />
-                <YAxis
-                  allowDecimals={false}
-                  tick={{ fontSize: 11, fill: "#9ca3af" }}
-                />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#9ca3af" }} />
                 <Tooltip
-                  formatter={(value) => [`${value} блок.`, "Блокировок"]}
-                  labelFormatter={(label) => `Минута ${label}`}
+                  formatter={(value) => [`${value} ${t("blockTooltip")}`, t("blocksLabel")]}
+                  labelFormatter={(label) => `${t("minuteLabel")} ${label}`}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                   {chartData.map((entry) => (
@@ -97,11 +96,10 @@ export default function StatsPage() {
         )}
       </div>
 
-      {/* Топ доменов */}
       <div className={styles.section}>
-        <div className={styles.sectionTitle}>Топ заблокированных сайтов</div>
+        <div className={styles.sectionTitle}>{t("topSites")}</div>
         {stats.top_domains.length === 0 ? (
-          <div className={styles.empty}>Нет данных</div>
+          <div className={styles.empty}>{t("noData")}</div>
         ) : (
           <div className={styles.domainList}>
             {stats.top_domains.map((item, i) => {
