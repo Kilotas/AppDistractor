@@ -2,7 +2,63 @@ import { login, register } from "../api.js";
 import { playStart, playBreak, playResume, playComplete } from "../sounds.js";
 
 // ── i18n ───────────────────────────────────────────────
-const i18n = (key, ...subs) => chrome.i18n.getMessage(key, subs) || key;
+let currentLang = "ru";
+
+const MESSAGES = {
+  ru: {
+    tabLogin: "Войти", tabRegister: "Регистрация",
+    placeholderPassword: "Пароль", placeholderConfirm: "Подтвердите пароль",
+    authHint: "Мин. 8 символов, заглавная и строчная буква, цифра",
+    btnLogin: "Войти", btnRegister: "Зарегистрироваться",
+    chooseTask: "Выбери задачу:", loading: "— загрузка —",
+    pomoLabel: "Помодоро", labelFocus: "Фокус", labelBreak: "Перерыв",
+    labelLong: "Длинный", labelMin: "мин",
+    soundsLabel: "Звуки", soundsHint: "при смене фаз и завершении",
+    btnStart: "Начать сессию", manageTasks: "Управление задачами →", btnLogout: "Выйти",
+    phaseActive: "● В ФОКУСЕ", phaseFocus: "● ФОКУС", phaseBreak: "● ПЕРЕРЫВ",
+    labelBlocks: "блокировок", labelPomos: "помидоров",
+    btnStop: "Завершить", btnForceStop: "Принудительно завершить →",
+    resultTitle: "Сессия завершена", resultDuration: "Длительность:",
+    resultBlocked: "Блокировок:", resultPomos: "Помидоров:", btnNewSession: "Новая сессия",
+    notifyFocusTitle: "🚀 Время работать!", notifyFocusMsg: "Перерыв закончился. Вперёд!",
+    notifyBreakTitle: "☕ Перерыв!", notifyBreakMsg: "5 минут. Встань, разомнись.",
+    notifyLongTitle: "🎉 Длинный перерыв!", notifyLongMsg: "15 минут отдыха — ты заслужил.",
+    errFillFields: "Заполни email и пароль", errPwdMismatch: "Пароли не совпадают",
+    errPwdMin: "Минимум 8 символов", errPwdUpper: "Нужна заглавная буква",
+    errPwdLower: "Нужна строчная буква", errPwdDigit: "Нужна цифра",
+    errNoTasks: "Нет активных задач", errLoadTasks: "Не удалось загрузить задачи:",
+    taskFallback: "Задача #", pomoHint: (f, b) => `${f} мин фокус · ${b} мин перерыв`,
+  },
+  en: {
+    tabLogin: "Login", tabRegister: "Register",
+    placeholderPassword: "Password", placeholderConfirm: "Confirm password",
+    authHint: "Min. 8 chars, uppercase, lowercase, digit",
+    btnLogin: "Login", btnRegister: "Create account",
+    chooseTask: "Choose a task:", loading: "— loading —",
+    pomoLabel: "Pomodoro", labelFocus: "Focus", labelBreak: "Break",
+    labelLong: "Long", labelMin: "min",
+    soundsLabel: "Sounds", soundsHint: "on phase change and finish",
+    btnStart: "Start session", manageTasks: "Manage tasks →", btnLogout: "Logout",
+    phaseActive: "● FOCUSING", phaseFocus: "● FOCUS", phaseBreak: "● BREAK",
+    labelBlocks: "blocks", labelPomos: "pomodoros",
+    btnStop: "Finish", btnForceStop: "Force stop →",
+    resultTitle: "Session complete", resultDuration: "Duration:",
+    resultBlocked: "Blocks:", resultPomos: "Pomodoros:", btnNewSession: "New session",
+    notifyFocusTitle: "🚀 Back to work!", notifyFocusMsg: "Break is over. Let's go!",
+    notifyBreakTitle: "☕ Break time!", notifyBreakMsg: "5 minutes. Stand up, stretch.",
+    notifyLongTitle: "🎉 Long break!", notifyLongMsg: "15 minutes — you earned it.",
+    errFillFields: "Please fill in email and password", errPwdMismatch: "Passwords do not match",
+    errPwdMin: "At least 8 characters", errPwdUpper: "Uppercase letter required",
+    errPwdLower: "Lowercase letter required", errPwdDigit: "Digit required",
+    errNoTasks: "No active tasks", errLoadTasks: "Failed to load tasks:",
+    taskFallback: "Task #", pomoHint: (f, b) => `${f} min focus · ${b} min break`,
+  },
+};
+
+const i18n = (key, ...subs) => {
+  const val = MESSAGES[currentLang]?.[key] ?? key;
+  return typeof val === "function" ? val(...subs) : val;
+};
 
 function applyI18n() {
   document.querySelectorAll("[data-i18n]").forEach(el => {
@@ -11,6 +67,9 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
     el.placeholder = i18n(el.dataset.i18nPlaceholder);
   });
+  // Обновляем кнопку переключателя
+  const btn = document.getElementById("btn-lang");
+  if (btn) btn.textContent = currentLang === "ru" ? "EN" : "RU";
 }
 
 // ── Pomodoro ───────────────────────────────────────────
@@ -463,7 +522,16 @@ els.btnLogout.addEventListener("click", async () => {
 // ── Инициализация ──────────────────────────────────────
 
 async function init() {
+  const { extLang } = await chrome.storage.local.get("extLang");
+  currentLang = extLang ?? "ru";
   applyI18n();
+
+  document.getElementById("btn-lang")?.addEventListener("click", async () => {
+    currentLang = currentLang === "ru" ? "en" : "ru";
+    await chrome.storage.local.set({ extLang: currentLang });
+    applyI18n();
+  });
+
   const { authToken } = await chrome.storage.local.get("authToken");
   if (!authToken) { showScreen("auth"); return; }
 
