@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Заблокировано — Focus App</title>
+  <title>Заблокировано — FocusVoid</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -11,19 +11,19 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f8fafc;
+      background: #0b0f1a;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #1a1a1a;
+      color: #e2e8f0;
     }
 
     .card {
-      background: #fff;
+      background: #111827;
+      border: 1px solid #1e2d47;
       border-radius: 16px;
       padding: 48px 40px;
       max-width: 440px;
       width: 90%;
       text-align: center;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
     }
 
     .icon {
@@ -36,20 +36,20 @@
       font-size: 22px;
       font-weight: 700;
       margin-bottom: 12px;
-      color: #111827;
+      color: #e2e8f0;
     }
 
     .subtitle {
       font-size: 14px;
-      color: #6b7280;
+      color: #8892a4;
       margin-bottom: 28px;
       line-height: 1.6;
     }
 
     .blocked-url {
       font-size: 13px;
-      color: #dc2626;
-      background: #fef2f2;
+      color: #f87171;
+      background: #2d1515;
       border-radius: 8px;
       padding: 10px 14px;
       margin-bottom: 28px;
@@ -73,12 +73,12 @@
     .stat-value {
       font-size: 28px;
       font-weight: 700;
-      color: #2563eb;
+      color: #4f7df9;
     }
 
     .stat-label {
       font-size: 11px;
-      color: #9ca3af;
+      color: #4d5e78;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -86,7 +86,7 @@
     .btn-back {
       display: inline-block;
       padding: 10px 24px;
-      background: #2563eb;
+      background: #4f7df9;
       color: #fff;
       border: none;
       border-radius: 8px;
@@ -96,7 +96,7 @@
       text-decoration: none;
     }
 
-    .btn-back:hover { opacity: 0.85; }
+    .btn-back:hover { background: #6b94ff; }
   </style>
 </head>
 <body>
@@ -123,7 +123,7 @@
       </div>
     </div>
 
-    <button class="btn-back" onclick="history.back()">← Назад</button>
+    <button class="btn-back" id="btn-back">← Назад</button>
   </div>
 
   <script src="blocked.js"></script>

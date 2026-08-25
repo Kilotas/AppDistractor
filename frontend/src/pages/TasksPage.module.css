@@ -10,20 +10,38 @@
 .center {
   text-align: center;
   margin-top: 80px;
-  color: #6b7280;
+  color: var(--text-2);
 }
 
-.header { border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; }
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+}
+
+.logoutBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.logoutBtn:hover { color: var(--error); border-color: var(--error); }
 
 .title {
   font-size: 24px;
   font-weight: 800;
-  color: #2563eb;
+  color: var(--accent);
+  letter-spacing: -0.5px;
 }
 
 .error {
-  background: #fef2f2;
-  color: #dc2626;
+  background: var(--error-bg);
+  color: var(--error);
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 13px;
@@ -31,8 +49,94 @@
 
 .empty {
   text-align: center;
-  color: #9ca3af;
+  color: var(--text-muted);
   padding: 40px 0;
+}
+
+/* ── Streak виджет ───────────────────────── */
+.streakWidget {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 24px;
+}
+
+.streakStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.streakValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.streakLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.streakDivider {
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+}
+
+/* ── Heatmap ──────────────────────────────── */
+.heatmapCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.heatmapTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.heatmapGrid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.heatmapCell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+}
+
+.heatmapLevel0 { background: var(--surface-2); }
+.heatmapLevel1 { background: #1a4731; }
+.heatmapLevel2 { background: #1e6b44; }
+.heatmapLevel3 { background: #22c55e; }
+
+.heatmapLegend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.heatmapLegend .heatmapCell {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 /* ── Форма создания ───────────────────────── */
@@ -40,8 +144,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
 }
@@ -50,8 +154,8 @@
 .taskList { display: flex; flex-direction: column; gap: 12px; }
 
 .taskCard {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -66,22 +170,116 @@
   gap: 12px;
 }
 
-.taskTitle { font-weight: 600; font-size: 15px; }
-.taskDesc { font-size: 13px; color: #6b7280; margin-top: 2px; }
+.taskTitle { font-weight: 600; font-size: 15px; color: var(--text); }
+.taskDesc { font-size: 13px; color: var(--text-2); margin-top: 2px; }
 
 .taskActions { display: flex; gap: 6px; flex-shrink: 0; }
 
-/* ── Whitelist ────────────────────────────── */
-.whitelist {
-  border-top: 1px solid #f3f4f6;
+/* ── Subtasks ─────────────────────────────── */
+.subtasks {
+  border-top: 1px solid var(--border);
   padding-top: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.whitelistTitle { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
-.whitelistEmpty { font-size: 13px; color: #9ca3af; }
+.subtasksHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.subtasksTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subtasksCount {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 1px 8px;
+}
+
+.subtasksEmpty {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.subtaskList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subtaskRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+}
+
+.subtaskRow:hover { background: var(--surface-hover); }
+
+.subtaskCheck {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.subtaskTitle {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.subtaskDone {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.subtaskEditInput {
+  flex: 1;
+  font-size: 14px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 6px;
+  outline: none;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.addSubtask {
+  display: flex;
+  gap: 8px;
+}
+
+.addSubtask .input {
+  flex: 1;
+}
+
+/* ── Whitelist ────────────────────────────── */
+.whitelist {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.whitelistTitle { font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; }
+.whitelistEmpty { font-size: 13px; color: var(--text-muted); }
 
 .domainList { display: flex; flex-direction: column; gap: 6px; }
 
@@ -89,13 +287,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f9fafb;
+  background: var(--surface-2);
   border-radius: 6px;
   padding: 6px 10px;
 }
 
-.domain { font-size: 13px; font-weight: 500; flex: 1; }
-.label { font-size: 12px; color: #9ca3af; }
+.domain { font-size: 13px; font-weight: 500; flex: 1; color: var(--text); }
+.label { font-size: 12px; color: var(--text-muted); }
 
 .addDomain { display: flex; gap: 8px; flex-wrap: wrap; }
 .addDomain .input { flex: 1; min-width: 120px; }
@@ -103,18 +301,21 @@
 /* ── Инпуты и кнопки ─────────────────────── */
 .input {
   padding: 8px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
   outline: none;
   width: 100%;
+  background: var(--surface-2);
+  color: var(--text);
 }
 
-.input:focus { border-color: #2563eb; }
+.input::placeholder { color: var(--text-muted); }
+.input:focus { border-color: var(--accent); }
 
 .btnPrimary {
   padding: 8px 16px;
-  background: #2563eb;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -123,38 +324,38 @@
 }
 
 .btnPrimary:disabled { opacity: 0.4; cursor: not-allowed; }
-.btnPrimary:not(:disabled):hover { opacity: 0.85; }
+.btnPrimary:not(:disabled):hover { background: var(--accent-hover); }
 
 .btnSecondary {
   padding: 6px 12px;
-  background: #f3f4f6;
-  color: #374151;
-  border: none;
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-weight: 500;
   white-space: nowrap;
 }
 
-.btnSecondary:hover { background: #e5e7eb; }
+.btnSecondary:hover { background: var(--surface-hover); color: var(--text); }
 
 .btnDanger {
   padding: 6px 10px;
-  background: #fef2f2;
-  color: #dc2626;
+  background: var(--error-bg);
+  color: var(--error);
   border: none;
   border-radius: 8px;
   font-weight: 600;
 }
 
-.btnDanger:hover { background: #fee2e2; }
+.btnDanger:hover { background: var(--error-hover-bg); }
 
 .btnRemove {
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--text-muted);
   font-size: 12px;
   padding: 2px 4px;
   margin-left: auto;
 }
 
-.btnRemove:hover { color: #dc2626; }
+.btnRemove:hover { color: var(--error); }

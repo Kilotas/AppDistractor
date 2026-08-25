@@ -2,47 +2,141 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Focus App</title>
+  <title>FocusVoid</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
 
+  <!-- Экран: авторизация -->
+  <div id="screen-auth" class="screen hidden">
+    <h2 class="app-title">FocusVoid</h2>
+
+    <div id="auth-tabs" class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Войти</button>
+      <button class="auth-tab" data-tab="register">Регистрация</button>
+    </div>
+
+    <input id="auth-email" type="email" class="input" placeholder="Email" />
+    <input id="auth-password" type="password" class="input" placeholder="Пароль" />
+    <input id="auth-confirm" type="password" class="input hidden" placeholder="Подтвердите пароль" />
+    <p id="auth-hint" class="auth-hint hidden">Мин. 8 символов, заглавная и строчная буква, цифра</p>
+
+    <button id="btn-auth-submit" class="btn btn-primary">Войти</button>
+    <div id="auth-error" class="error hidden"></div>
+  </div>
+
   <!-- Экран: нет активной сессии -->
   <div id="screen-idle" class="screen hidden">
-    <h2 class="app-title">Focus App</h2>
+    <h2 class="app-title">FocusVoid</h2>
 
     <div class="section-label">Выбери задачу:</div>
     <select id="task-select">
       <option value="">— загрузка —</option>
     </select>
 
-    <button id="btn-start" class="btn btn-primary" disabled>Начать сессию</button>
+    <div class="pomo-row">
+      <label class="pomo-switch">
+        <input type="checkbox" id="pomo-check">
+        <span class="pomo-knob"></span>
+      </label>
+      <div class="pomo-info">
+        <div class="pomo-label">Помодоро</div>
+        <div class="pomo-hint" id="pomo-hint">25 мин фокус · 5 мин перерыв</div>
+      </div>
+    </div>
 
+    <div class="pomo-settings hidden" id="pomo-settings">
+      <div class="pomo-setting">
+        <span class="pomo-setting-label">Фокус</span>
+        <div class="pomo-setting-input">
+          <input type="number" id="pomo-focus" min="1" max="120" value="25">
+          <span>мин</span>
+        </div>
+      </div>
+      <div class="pomo-setting">
+        <span class="pomo-setting-label">Перерыв</span>
+        <div class="pomo-setting-input">
+          <input type="number" id="pomo-break" min="1" max="60" value="5">
+          <span>мин</span>
+        </div>
+      </div>
+      <div class="pomo-setting">
+        <span class="pomo-setting-label">Длинный</span>
+        <div class="pomo-setting-input">
+          <input type="number" id="pomo-long" min="1" max="120" value="15">
+          <span>мин</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pomo-row" style="margin-top: 0">
+      <label class="pomo-switch">
+        <input type="checkbox" id="sounds-check" checked>
+        <span class="pomo-knob"></span>
+      </label>
+      <div class="pomo-info">
+        <div class="pomo-label">Звуки</div>
+        <div class="pomo-hint">при смене фаз и завершении</div>
+      </div>
+    </div>
+
+    <button id="btn-start" class="btn btn-primary" disabled>Начать сессию</button>
     <div id="idle-error" class="error hidden"></div>
 
-    <a class="manage-link" href="http://localhost:5173/tasks" target="_blank">
-      Управление задачами →
-    </a>
+    <div class="bottom-row">
+      <a class="manage-link" href="http://localhost:5173/tasks" target="_blank">
+        Управление задачами →
+      </a>
+      <button id="btn-logout" class="btn-link">Выйти</button>
+    </div>
   </div>
 
   <!-- Экран: сессия активна -->
   <div id="screen-active" class="screen hidden">
-    <div class="status-badge">● В фокусе</div>
 
-    <div class="task-name" id="active-task-name"></div>
+    <div class="active-header">
+      <div class="phase-badge" id="phase-badge">● В ФОКУСЕ</div>
+      <div class="task-name" id="active-task-name"></div>
+    </div>
 
-    <div class="timer" id="timer">00:00</div>
+    <div class="ring-wrap">
+      <svg class="ring-svg" viewBox="0 0 120 120">
+        <defs>
+          <linearGradient id="ring-grad" gradientUnits="userSpaceOnUse"
+                          x1="60" y1="10" x2="110" y2="110">
+            <stop offset="0%" stop-color="#a855f7"/>
+            <stop offset="100%" stop-color="#7c3aed"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-track" cx="60" cy="60" r="50"/>
+        <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="50"
+                transform="rotate(-90 60 60)"/>
+      </svg>
+      <div class="ring-center">
+        <div class="timer" id="timer">00:00</div>
+        <div class="pomo-dots hidden" id="pomo-dots">○ ○ ○ ○</div>
+      </div>
+    </div>
 
-    <div class="stats">
+    <div class="active-stats">
       <div class="stat">
-        <span class="stat-value" id="blocked-count">0</span>
+        <span class="stat-value red" id="blocked-count">0</span>
         <span class="stat-label">блокировок</span>
+      </div>
+      <div class="stat hidden" id="stat-pomo">
+        <span class="stat-value purple" id="pomo-done">0</span>
+        <span class="stat-label">помидоров</span>
       </div>
     </div>
 
     <button id="btn-stop" class="btn btn-danger">Завершить</button>
-
-    <div id="active-error" class="error hidden"></div>
+    <div id="active-error" class="error hidden">
+      <div style="margin-top:6px">
+        <button id="btn-force-stop" class="btn-link" style="color:#f87171;font-size:11px">
+          Принудительно завершить →
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Экран: результат после завершения -->
@@ -57,6 +151,7 @@
     <div class="result-stats">
       <div>Длительность: <strong id="result-duration">—</strong></div>
       <div>Блокировок: <strong id="result-blocked">—</strong></div>
+      <div class="hidden" id="result-pomo-row">Помидоров: <strong id="result-pomos">—</strong> 🍅</div>
     </div>
 
     <button id="btn-new" class="btn btn-primary">Новая сессия</button>

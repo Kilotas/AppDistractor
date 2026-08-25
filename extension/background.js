@@ -38,9 +38,18 @@ async function handleMessage(message) {
     case "STOP_SESSION": {
       const state = await getState();
       if (!state.session) throw new Error("Нет активной сессии");
-      const session = await stopSession(state.session.id);
-      await disableBlocking();
-      return session;
+      try {
+        const session = await stopSession(state.session.id);
+        await disableBlocking();
+        return session;
+      } catch (err) {
+        // Сессия уже удалена или не найдена — чистим storage и снимаем блокировку
+        if (err.message.includes("not found") || err.message.includes("404")) {
+          await disableBlocking();
+          return { focus_score: 0, blocked_attempts: 0, started_at: null, ended_at: null };
+        }
+        throw err;
+      }
     }
 
     default:
@@ -49,6 +58,14 @@ async function handleMessage(message) {
 }
 
 // ── Блокировка ────────────────────────────────────────
+
+function toAsciiDomain(domain) {
+  try {
+    return new URL("http://" + domain).hostname;
+  } catch {
+    return domain;
+  }
+}
 
 async function enableBlocking(session, whitelistEntries) {
   // Сохраняем сессию в storage — переживёт "сон" service worker'а
@@ -82,7 +99,7 @@ async function enableBlocking(session, whitelistEntries) {
       priority: 2, // выше чем BLOCK_ALL → перебивает блокировку
       action: { type: "allow" },
       condition: {
-        requestDomains: [entry.domain],
+        requestDomains: [toAsciiDomain(entry.domain)],
         resourceTypes: ["main_frame"],
       },
     })),

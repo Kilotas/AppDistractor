@@ -1,7 +1,18 @@
+from urllib.parse import urlparse
+
 from app.domain.models import WhitelistEntry
 from app.domain.schemas.whitelist import WhitelistEntryCreate
 from app.exceptions import NotFoundError
 from app.unit_of_work.protocol import UoWProtocol
+
+
+def _to_ascii_domain(domain: str) -> str:
+    """Конвертирует Unicode домен в punycode (яндекс.рф → xn--...). ASCII остаётся как есть."""
+    domain = domain.strip().lower()
+    try:
+        return domain.encode("idna").decode("ascii")
+    except (UnicodeError, UnicodeDecodeError):
+        return domain
 
 
 class WhitelistService:
@@ -20,7 +31,7 @@ class WhitelistService:
             task = await self._uow.tasks.get_by_id(task_id)
             if task is None:
                 raise NotFoundError("Task", task_id)
-            entry = WhitelistEntry(task_id=task_id, domain=data.domain, label=data.label)
+            entry = WhitelistEntry(task_id=task_id, domain=_to_ascii_domain(data.domain), label=data.label)
             await self._uow.whitelist.add(entry)
             await self._uow.commit()
             return entry
@@ -43,7 +54,7 @@ class WhitelistService:
                 raise NotFoundError("Task", task_id)
             await self._uow.whitelist.delete_by_task_id(task_id)
             new_entries = [
-                WhitelistEntry(task_id=task_id, domain=e.domain, label=e.label)
+                WhitelistEntry(task_id=task_id, domain=_to_ascii_domain(e.domain), label=e.label)
                 for e in entries
             ]
             for entry in new_entries:

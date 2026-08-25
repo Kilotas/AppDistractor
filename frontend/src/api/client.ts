@@ -1,15 +1,69 @@
 const BASE_URL = "http://localhost:8000/api/v1";
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+// ── Token helpers ──────────────────────────────────────
+
+export const TOKEN_KEY = "focus_token";
+export const GUEST_KEY = "focus_guest";
+
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(GUEST_KEY);
+}
+
+export function isGuest(): boolean {
+  return localStorage.getItem(GUEST_KEY) === "1";
+}
+
+export function setGuest(): void {
+  localStorage.setItem(GUEST_KEY, "1");
+}
+
+// ── HTTP ───────────────────────────────────────────────
+
+export class ApiError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function request<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+  authenticated = true,
+): Promise<T> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+  if (authenticated) {
+    const token = getToken();
+    if (!token) throw new ApiError("Не авторизован", 401);
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
+  if (response.status === 401) {
+    clearToken();
+    window.location.href = "/login";
+    throw new ApiError("Сессия истекла", 401);
+  }
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: response.statusText }));
-    throw new Error(error.detail ?? "Unknown error");
+    throw new ApiError(error.detail ?? "Unknown error", response.status);
   }
 
   if (response.status === 204) return null as T;
@@ -17,6 +71,14 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 // ── Types ──────────────────────────────────────────────
+
+export interface User {
+  id: number;
+  email: string;
+  plan: "free" | "pro";
+  trial_ends_at: string | null;
+  created_at: string;
+}
 
 export interface Task {
   id: number;
@@ -60,9 +122,64 @@ export interface SessionStats {
   top_domains: { domain: string; count: number }[];
 }
 
-// ── Tasks ──────────────────────────────────────────────
+export interface Subtask {
+  id: number;
+  task_id: number;
+  title: string;
+  is_completed: boolean;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StreakStats {
+  current_streak: number;
+  longest_streak: number;
+  total_days_active: number;
+  last_active_date: string | null;
+}
+
+export interface DailyActivity {
+  date: string;
+  focus_minutes: number;
+  sessions_count: number;
+}
+
+export interface DailyStats {
+  days: DailyActivity[];
+}
+
+// ── Auth ───────────────────────────────────────────────
 
 export const api = {
+  auth: {
+    login: (email: string, password: string) =>
+      request<{ access_token: string; token_type: string }>(
+        "POST",
+        "/auth/login",
+        { email, password },
+        false,
+      ),
+    register: (email: string, password: string, confirmPassword: string) =>
+      request<{ access_token: string; token_type: string }>(
+        "POST",
+        "/auth/register",
+        { email, password, confirm_password: confirmPassword },
+        false,
+      ),
+    verify: (token: string) =>
+      request<{ access_token: string; token_type: string }>("POST", `/auth/verify?token=${encodeURIComponent(token)}`, undefined, false),
+    resendVerification: () =>
+      request<{ detail: string }>("POST", "/auth/resend-verification"),
+    me: () => request<User>("GET", "/auth/me"),
+    guest: () =>
+      request<{ access_token: string; token_type: string }>("POST", "/auth/guest", undefined, false),
+  },
+
+  billing: {
+    checkout: () => request<{ url: string }>("POST", "/billing/checkout"),
+  },
+
   tasks: {
     list: () => request<Task[]>("GET", "/tasks/"),
     create: (title: string, description?: string) =>
@@ -84,5 +201,22 @@ export const api = {
 
   insights: {
     get: (taskId: number) => request<TaskInsights>("GET", `/tasks/${taskId}/insights`),
+  },
+
+  stats: {
+    streak: () => request<StreakStats>("GET", "/stats/streak"),
+    daily: (days = 30) => request<DailyStats>("GET", `/stats/daily?days=${days}`),
+  },
+
+  subtasks: {
+    list: (taskId: number) => request<Subtask[]>("GET", `/tasks/${taskId}/subtasks`),
+    create: (taskId: number, title: string) =>
+      request<Subtask>("POST", `/tasks/${taskId}/subtasks`, { title }),
+    toggle: (taskId: number, subtaskId: number, is_completed: boolean) =>
+      request<Subtask>("PATCH", `/tasks/${taskId}/subtasks/${subtaskId}`, { is_completed }),
+    rename: (taskId: number, subtaskId: number, title: string) =>
+      request<Subtask>("PATCH", `/tasks/${taskId}/subtasks/${subtaskId}`, { title }),
+    delete: (taskId: number, subtaskId: number) =>
+      request<null>("DELETE", `/tasks/${taskId}/subtasks/${subtaskId}`),
   },
 };

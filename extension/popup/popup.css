@@ -11,20 +11,18 @@ body {
   color: #1a1a1a;
   background: #fff;
   padding: 20px;
+  transition: background 0.3s;
 }
 
-.hidden {
-  display: none !important;
+body.dark {
+  background: #0d0d1f;
 }
 
-/* ── Экраны ───────────────────────────────── */
-.screen {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.hidden { display: none !important; }
 
-/* ── Idle ─────────────────────────────────── */
+.screen { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── Idle ──────────────────────────────────── */
 .app-title {
   font-size: 18px;
   font-weight: 700;
@@ -47,37 +45,199 @@ select {
   cursor: pointer;
   outline: none;
 }
+select:focus { border-color: #2563eb; }
 
-select:focus {
-  border-color: #2563eb;
+/* ── Pomodoro toggle ───────────────────────── */
+.pomo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f5f3ff;
+  border-radius: 10px;
+  border: 1px solid #ede9fe;
 }
 
-/* ── Active ───────────────────────────────── */
-.status-badge {
-  font-size: 12px;
+.pomo-switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.pomo-switch input { display: none; }
+
+.pomo-knob {
+  position: absolute;
+  inset: 0;
+  background: #d1d5db;
+  border-radius: 22px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pomo-knob::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.pomo-switch input:checked + .pomo-knob { background: #7c3aed; }
+.pomo-switch input:checked + .pomo-knob::before { transform: translateX(16px); }
+
+.pomo-info { display: flex; flex-direction: column; gap: 2px; }
+.pomo-label { font-size: 13px; font-weight: 600; color: #4c1d95; }
+.pomo-hint { font-size: 11px; color: #7c3aed; }
+
+/* ── Pomodoro settings ─────────────────────── */
+.pomo-settings {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #f5f3ff;
+  border-radius: 10px;
+  border: 1px solid #ede9fe;
+  margin-top: -6px;
+}
+
+.pomo-setting {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pomo-setting-label {
+  font-size: 10px;
   font-weight: 600;
-  color: #16a34a;
+  color: #7c3aed;
+  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.task-name {
-  font-size: 15px;
+.pomo-setting-input {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.pomo-setting-input input {
+  width: 44px;
+  padding: 4px 6px;
+  border: 1px solid #ddd6fe;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: #4c1d95;
+  background: #fff;
+  text-align: center;
+  outline: none;
+}
+
+.pomo-setting-input input:focus {
+  border-color: #7c3aed;
+}
+
+/* ── Active screen ─────────────────────────── */
+.active-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.phase-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #a855f7;
+  text-transform: uppercase;
+}
+
+.phase-badge.break { color: #10b981; }
+
+.task-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c4b5fd;
+  max-width: 230px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Ring ──────────────────────────────────── */
+.ring-wrap {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  margin: 4px auto;
+}
+
+.ring-svg {
+  width: 170px;
+  height: 170px;
+}
+
+.ring-track {
+  fill: none;
+  stroke: #1e1b4b;
+  stroke-width: 6;
+}
+
+.ring-fill {
+  fill: none;
+  stroke: url(#ring-grad);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 314.16;
+  stroke-dashoffset: 314.16;
+  transition: stroke-dashoffset 0.9s ease;
+}
+
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 
 .timer {
-  font-size: 40px;
+  font-size: 36px;
   font-weight: 700;
-  letter-spacing: 2px;
-  color: #2563eb;
-  text-align: center;
-  padding: 8px 0;
+  letter-spacing: 1px;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-.stats {
+.pomo-dots {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #a855f7;
+  min-height: 14px;
+}
+
+/* ── Active stats ──────────────────────────── */
+.active-stats {
   display: flex;
   justify-content: center;
+  gap: 36px;
 }
 
 .stat {
@@ -88,19 +248,21 @@ select:focus {
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  color: #dc2626;
 }
 
+.stat-value.red { color: #dc2626; }
+.stat-value.purple { color: #a855f7; }
+
 .stat-label {
-  font-size: 11px;
-  color: #6b7280;
+  font-size: 10px;
+  color: #4b5563;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* ── Result ───────────────────────────────── */
+/* ── Result ────────────────────────────────── */
 .result-title {
   font-size: 16px;
   font-weight: 700;
@@ -141,7 +303,7 @@ select:focus {
   padding: 10px 14px;
 }
 
-/* ── Кнопки ───────────────────────────────── */
+/* ── Buttons ───────────────────────────────── */
 .btn {
   width: 100%;
   padding: 10px;
@@ -153,34 +315,63 @@ select:focus {
   transition: opacity 0.15s;
 }
 
-.btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn:not(:disabled):hover { opacity: 0.85; }
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-danger { background: #dc2626; color: #fff; }
 
-.btn:not(:disabled):hover {
-  opacity: 0.85;
-}
-
-.btn-primary {
-  background: #2563eb;
-  color: #fff;
-}
-
-.btn-danger {
-  background: #dc2626;
-  color: #fff;
-}
-
-.manage-link {
-  font-size: 12px;
-  color: #2563eb;
-  text-align: center;
-  text-decoration: none;
-}
+.manage-link { font-size: 12px; color: #2563eb; text-decoration: none; }
 .manage-link:hover { text-decoration: underline; }
 
-/* ── Ошибки ───────────────────────────────── */
+/* ── Auth ──────────────────────────────────── */
+.auth-tabs {
+  display: flex;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: #f9fafb;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.auth-tab.active { background: #2563eb; color: #fff; font-weight: 600; }
+
+.input {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background: #f9fafb;
+}
+
+.input:focus { border-color: #2563eb; background: #fff; }
+
+.auth-hint { font-size: 11px; color: #6b7280; line-height: 1.4; }
+
+/* ── Bottom row ────────────────────────────── */
+.bottom-row { display: flex; justify-content: space-between; align-items: center; }
+
+.btn-link {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0;
+}
+.btn-link:hover { color: #dc2626; }
+
+/* ── Errors ────────────────────────────────── */
 .error {
   font-size: 12px;
   color: #dc2626;

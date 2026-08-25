@@ -1,25 +1,49 @@
 const BASE_URL = "http://localhost:8000/api/v1";
 
-async function request(method, path, body = null) {
-  const options = {
-    method,
-    headers: { "Content-Type": "application/json" },
-  };
+async function getToken() {
+  const { authToken } = await chrome.storage.local.get("authToken");
+  return authToken ?? null;
+}
+
+async function request(method, path, body = null, authenticated = true) {
+  const headers = { "Content-Type": "application/json" };
+
+  if (authenticated) {
+    const token = await getToken();
+    if (!token) throw new Error("Не авторизован");
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const options = { method, headers };
   if (body !== null) {
     options.body = JSON.stringify(body);
   }
 
   const response = await fetch(`${BASE_URL}${path}`, options);
 
+  if (response.status === 401) {
+    // Токен протух — чистим
+    await chrome.storage.local.remove("authToken");
+    throw new Error("Сессия истекла, войдите снова");
+  }
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: response.statusText }));
     throw new Error(error.detail ?? "Unknown error");
   }
 
-  // 204 No Content — тела нет
   if (response.status === 204) return null;
 
   return response.json();
+}
+
+// ── Auth ───────────────────────────────────────────────
+export async function login(email, password) {
+  return request("POST", "/auth/login", { email, password }, false);
+}
+
+export async function register(email, password, confirmPassword) {
+  return request("POST", "/auth/register", { email, password, confirm_password: confirmPassword }, false);
 }
 
 // ── Tasks ─────────────────────────────────────────────

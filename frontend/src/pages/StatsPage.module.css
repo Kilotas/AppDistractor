@@ -7,34 +7,34 @@
   gap: 24px;
 }
 
-.center { text-align: center; margin-top: 80px; color: #6b7280; }
-.error { color: #dc2626; }
+.center { text-align: center; margin-top: 80px; color: var(--text-2); }
+.error { color: var(--error); }
 
-.header { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; }
+.header { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
 
-.back { background: none; border: none; color: #6b7280; font-size: 14px; padding: 4px 0; }
-.back:hover { color: #2563eb; }
+.back { background: none; border: none; color: var(--text-2); font-size: 14px; padding: 4px 0; }
+.back:hover { color: var(--accent); }
 
-.title { font-size: 20px; font-weight: 700; }
+.title { font-size: 20px; font-weight: 700; color: var(--text); }
 
 /* ── Карточки ─────────────────────────────── */
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 
 .card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
   text-align: center;
 }
 
-.cardValue { font-size: 28px; font-weight: 800; color: #2563eb; }
-.cardLabel { font-size: 12px; color: #9ca3af; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.cardValue { font-size: 28px; font-weight: 800; color: var(--accent); }
+.cardLabel { font-size: 12px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 
 /* ── Секции ───────────────────────────────── */
 .section {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -42,8 +42,8 @@
   gap: 16px;
 }
 
-.sectionTitle { font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
-.empty { color: #9ca3af; font-size: 13px; text-align: center; padding: 16px 0; }
+.sectionTitle { font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; }
+.empty { color: var(--text-muted); font-size: 13px; text-align: center; padding: 16px 0; }
 .chart { margin: 0 -4px; }
 
 /* ── Топ доменов ──────────────────────────── */
@@ -51,13 +51,13 @@
 
 .domainRow { display: flex; align-items: center; gap: 12px; }
 
-.domainRank { font-size: 12px; font-weight: 700; color: #9ca3af; width: 16px; text-align: center; flex-shrink: 0; }
+.domainRank { font-size: 12px; font-weight: 700; color: var(--text-muted); width: 16px; text-align: center; flex-shrink: 0; }
 
 .domainInfo { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 
-.domainName { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.domainName { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
 
-.bar { height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
-.barFill { height: 100%; background: #2563eb; border-radius: 3px; transition: width 0.3s; }
+.bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.barFill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
 
-.domainCount { font-size: 13px; font-weight: 600; color: #374151; flex-shrink: 0; }
+.domainCount { font-size: 13px; font-weight: 600; color: var(--text-2); flex-shrink: 0; }

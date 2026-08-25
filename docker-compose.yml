@@ -5,6 +5,8 @@ services:
       POSTGRES_DB: focus
       POSTGRES_USER: focus
       POSTGRES_PASSWORD: focus
+    ports:
+      - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -22,11 +24,26 @@ services:
       APP_DEBUG: "true"
       DATABASE_URL: postgresql+asyncpg://focus:focus@db:5432/focus
       CORS_ORIGINS: '["http://localhost:5173","chrome-extension://*"]'
+      JWT_SECRET: "dev-secret-change-in-production"
+      APP_URL: "http://localhost:5173"
+    env_file:
+      - .env
     volumes:
       - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
     depends_on:
       db:
         condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - backend
 
 volumes:
   db-data:

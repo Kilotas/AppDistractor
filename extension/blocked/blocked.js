@@ -1,3 +1,5 @@
+document.getElementById("btn-back").addEventListener("click", () => history.back());
+
 // Читаем оригинальный URL из query-параметра ?url=...
 const params = new URLSearchParams(window.location.search);
 const blockedUrl = params.get("url");

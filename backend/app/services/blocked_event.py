@@ -1,3 +1,4 @@
+import logging
 from collections import Counter
 
 from app.domain.models import BlockedEvent
@@ -5,6 +6,8 @@ from app.domain.schemas.blocked_event import BlockedEventCreate
 from app.domain.schemas.stats import SessionStats
 from app.exceptions import ConflictError, NotFoundError
 from app.unit_of_work.protocol import UoWProtocol
+
+logger = logging.getLogger(__name__)
 
 
 class BlockedEventService:
@@ -31,6 +34,7 @@ class BlockedEventService:
             await self._uow.blocked_events.add(event)
             session.blocked_attempts += 1
             await self._uow.commit()
+            logger.info("Blocked event logged: session_id=%d domain=%s total_blocked=%d", data.session_id, data.domain, session.blocked_attempts)
             return event
 
     async def get_for_session(self, session_id: int) -> list[BlockedEvent]:

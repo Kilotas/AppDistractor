@@ -1,9 +1,12 @@
+import logging
 from datetime import datetime, timezone
 
 from app.domain.models import Session, SessionStatus
 from app.domain.schemas.session import SessionStart
-from app.exceptions import NotFoundError, ConflictError
+from app.exceptions import NotFoundError, ConflictError  # ConflictError used in stop()
 from app.unit_of_work.protocol import UoWProtocol
+
+logger = logging.getLogger(__name__)
 
 
 class SessionService:
@@ -18,9 +21,8 @@ class SessionService:
 
             existing = await self._uow.sessions.get_active_for_task(data.task_id)
             if existing is not None:
-                raise ConflictError(
-                    f"Task {data.task_id} already has an active session (id={existing.id})"
-                )
+                logger.info("Session resume: task_id=%d returning existing session id=%d", data.task_id, existing.id)
+                return existing
 
             session = Session(
                 task_id=data.task_id,
@@ -29,6 +31,7 @@ class SessionService:
             )
             await self._uow.sessions.add(session)
             await self._uow.commit()
+            logger.info("Session started: id=%d task_id=%d", session.id, data.task_id)
             return session
 
     async def stop(self, session_id: int) -> Session:
@@ -37,6 +40,7 @@ class SessionService:
             if session is None:
                 raise NotFoundError("Session", session_id)
             if session.status != SessionStatus.ACTIVE:
+                logger.warning("Session stop conflict: session_id=%d status=%s", session_id, session.status)
                 raise ConflictError(f"Session {session_id} is not active")
 
             now = datetime.now(timezone.utc)
@@ -44,6 +48,12 @@ class SessionService:
             session.status = SessionStatus.COMPLETED
             session.focus_score = self._calc_focus_score(session)
             await self._uow.commit()
+
+            duration_sec = int((now - session.started_at).total_seconds())
+            logger.info(
+                "Session stopped: id=%d task_id=%d duration=%ds score=%.1f blocked=%d",
+                session_id, session.task_id, duration_sec, session.focus_score, session.blocked_attempts,
+            )
             return session
 
     async def get(self, session_id: int) -> Session:
