@@ -28,5 +28,9 @@ class User(Base, TimestampMixin):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     verification_token: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     is_guest: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
+    password_reset_token: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    password_reset_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     tasks: Mapped[list["Task"]] = relationship(back_populates="user", cascade="all, delete-orphan")  # noqa: F821
+    password_history: Mapped[list["PasswordHistory"]] = relationship(back_populates="user", cascade="all, delete-orphan")  # noqa: F821
+    routines: Mapped[list["Routine"]] = relationship(back_populates="user", cascade="all, delete-orphan")  # noqa: F821

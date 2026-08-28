@@ -87,6 +87,8 @@ export interface Task {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  subtask_count: number;
+  completed_count: number;
 }
 
 export interface Session {
@@ -149,6 +151,29 @@ export interface DailyStats {
   days: DailyActivity[];
 }
 
+export interface TaskFocusStat {
+  title: string;
+  total_minutes: number;
+  sessions_count: number;
+}
+
+export interface FocusScorePoint {
+  task_title: string;
+  focus_score: number;
+  ended_at: string;
+}
+
+export type RoutineType = "morning_brief" | "end_of_day" | "weekly_summary";
+
+export interface Routine {
+  id: number;
+  type: RoutineType;
+  enabled: boolean;
+  hour: number;
+  timezone_offset: number;
+  weekday: number;
+}
+
 // ── Auth ───────────────────────────────────────────────
 
 export const api = {
@@ -174,6 +199,12 @@ export const api = {
     me: () => request<User>("GET", "/auth/me"),
     guest: () =>
       request<{ access_token: string; token_type: string }>("POST", "/auth/guest", undefined, false),
+    forgotPassword: (email: string) =>
+      request<{ detail: string }>("POST", "/auth/forgot-password", { email }, false),
+    resetPassword: (token: string, new_password: string, confirm_password: string) =>
+      request<{ detail: string }>("POST", "/auth/reset-password", { token, new_password, confirm_password }, false),
+    changePassword: (current_password: string, new_password: string, confirm_password: string) =>
+      request<{ detail: string }>("POST", "/auth/change-password", { current_password, new_password, confirm_password }),
   },
 
   billing: {
@@ -185,6 +216,8 @@ export const api = {
     create: (title: string, description?: string) =>
       request<Task>("POST", "/tasks/", { title, description }),
     delete: (id: number) => request<null>("DELETE", `/tasks/${id}`),
+    setActive: (id: number, is_active: boolean) =>
+      request<Task>("PATCH", `/tasks/${id}`, { is_active }),
   },
 
   whitelist: {
@@ -206,6 +239,18 @@ export const api = {
   stats: {
     streak: () => request<StreakStats>("GET", "/stats/streak"),
     daily: (days = 30) => request<DailyStats>("GET", `/stats/daily?days=${days}`),
+    tasks: () => request<{ tasks: TaskFocusStat[] }>("GET", "/stats/tasks"),
+    focusScore: () => request<{ points: FocusScorePoint[] }>("GET", "/stats/focus-score"),
+  },
+
+  activeSessions: {
+    list: () => request<Session[]>("GET", "/sessions/active"),
+  },
+
+  routines: {
+    list: () => request<Routine[]>("GET", "/routines"),
+    update: (type: RoutineType, data: Partial<Pick<Routine, "enabled" | "hour" | "timezone_offset" | "weekday">>) =>
+      request<Routine>("PATCH", `/routines/${type}`, data),
   },
 
   subtasks: {

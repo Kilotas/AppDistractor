@@ -32,12 +32,31 @@ from app.exceptions import AppError
 limiter = Limiter(key_func=get_remote_address)
 
 
+async def _run_routines() -> None:
+    from app.core.database import AsyncSessionFactory
+    from app.services.routine import RoutineService
+    from app.unit_of_work.sqlalchemy import SQLAlchemyUoW
+    uow = SQLAlchemyUoW(AsyncSessionFactory)
+    service = RoutineService(uow)
+    await service.run_scheduled()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
     logger.info("Starting Focus App API (env=%s)", settings.APP_ENV)
     await create_all_tables()
     logger.info("Database ready")
+
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(_run_routines, "cron", minute=0)  # каждый час в :00
+    scheduler.start()
+    logger.info("Routine scheduler started")
+
     yield
+
+    scheduler.shutdown(wait=False)
     logger.info("Focus App API shutting down")
 
 

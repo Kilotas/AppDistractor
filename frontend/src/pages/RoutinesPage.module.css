@@ -1,0 +1,196 @@
+.page {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.center {
+  text-align: center;
+  margin-top: 80px;
+  color: var(--text-muted);
+}
+
+.header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ── Список карточек ─────────────────────── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Карточка ────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: border-color 0.15s;
+}
+
+.cardActive {
+  border-color: var(--accent);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cardLabel {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.cardDesc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Toggle ──────────────────────────────── */
+.toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: none;
+  background: var(--surface-2);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.toggleOn {
+  background: var(--accent);
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  display: block;
+}
+
+.toggleOn .toggleKnob {
+  transform: translateX(20px);
+}
+
+.toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Настройки ───────────────────────────── */
+.settings {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settingLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+}
+.select:focus { border-color: var(--accent); }
+
+/* ── Выбор дня недели ────────────────────── */
+.weekdayPicker {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.dayBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dayBtn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.dayBtnActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.dayBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

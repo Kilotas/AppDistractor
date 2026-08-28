@@ -7,6 +7,8 @@ from app.repositories import (
     WhitelistRepository,
     BlockedEventRepository,
     SubtaskRepository,
+    PasswordHistoryRepository,
+    RoutineRepository,
 )
 
 
@@ -22,6 +24,8 @@ class SQLAlchemyUoW:
         self.whitelist = WhitelistRepository(self._session)
         self.blocked_events = BlockedEventRepository(self._session)
         self.subtasks = SubtaskRepository(self._session)
+        self.password_history = PasswordHistoryRepository(self._session)
+        self.routines = RoutineRepository(self._session)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
