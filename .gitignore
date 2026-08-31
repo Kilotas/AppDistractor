@@ -1,3 +1,4 @@
+
 # Python
 __pycache__/
 *.pyc
@@ -22,7 +23,8 @@ dist/
 .DS_Store
 
 # Docker
-graphify-out/
+graphify-out/cache/
+graphify-out/.graphify_*
 
 # IDE
 .idea/
