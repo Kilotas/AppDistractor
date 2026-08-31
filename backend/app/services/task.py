@@ -1,7 +1,7 @@
 import logging
 
 from app.domain.models import Task
-from app.domain.schemas.task import TaskCreate, TaskUpdate
+from app.domain.schemas.task import TaskCreate, TaskResponse, TaskUpdate
 from app.exceptions import NotFoundError
 from app.unit_of_work.protocol import UoWProtocol
 
@@ -27,9 +27,17 @@ class TaskService:
                 raise NotFoundError("Task", task_id)
             return task
 
-    async def list_all(self, user_id: int) -> list[Task]:
+    async def list_all(self, user_id: int) -> list[TaskResponse]:
         async with self._uow:
-            return await self._uow.tasks.get_all_for_user(user_id)
+            rows = await self._uow.tasks.get_all_for_user_with_counts(user_id)
+            return [
+                TaskResponse.model_validate({
+                    **{c.key: getattr(task, c.key) for c in task.__table__.columns},
+                    "subtask_count": subtask_count,
+                    "completed_count": completed_count,
+                })
+                for task, subtask_count, completed_count in rows
+            ]
 
     async def list_active(self, user_id: int) -> list[Task]:
         async with self._uow:

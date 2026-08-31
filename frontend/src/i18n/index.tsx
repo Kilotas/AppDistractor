@@ -38,12 +38,32 @@ const translations = {
     pwdDigit: "Нужна хотя бы одна цифра",
     pwdMismatch: "Пароли не совпадают",
 
+    // TodayWidget
+    todaySessions: "сессий сегодня",
+    todayMinutes: "мин фокуса",
+    todayEmpty: "Сегодня ещё не было сессий — запусти первую",
+
+    // ForgotPasswordPage
+    forgotTitle: "Забыли пароль?",
+    forgotDesc: "Введите email — мы пришлём ссылку для сброса",
+    btnSendReset: "Отправить ссылку",
+    forgotSuccess: "Если email зарегистрирован — письмо отправлено",
+    backToLogin: "← Назад ко входу",
+
+    // ResetPasswordPage
+    resetTitle: "Новый пароль",
+    resetDesc: "Придумайте новый пароль для вашего аккаунта",
+    placeholderNewPassword: "Новый пароль",
+    btnResetPassword: "Сохранить пароль",
+    resetSuccess: "Пароль изменён! Теперь можно войти",
+    resetTokenMissing: "Ссылка недействительна или устарела",
+    resetPasswordReused: "Этот пароль уже использовался. Придумайте новый.",
+
     // VerifyPage
     verifying: "Подтверждаем email...",
     verifiedTitle: "Email подтверждён!",
     verifiedDesc: "Теперь можно войти в приложение",
     goToTasks: "Перейти к задачам",
-    backToLogin: "На страницу входа",
     tokenMissing: "Токен отсутствует",
 
     // TasksPage
@@ -64,8 +84,25 @@ const translations = {
     btnChecklist: "Чеклист",
     btnSessions: "Сессии",
     btnDelete: "Удалить",
+    btnArchive: "Архив",
+    btnRestore: "Восстановить",
+    archivedSection: "Архив",
+    noArchivedTasks: "Нет архивных задач",
     newSubtask: "Новый пункт",
     addSubtask: "+ Добавить",
+
+    navTasks: "Задачи",
+
+    // DashboardPage
+    dashboardTitle: "Дашборд",
+    dashboardTotalHours: "часов фокуса",
+    dashboardTotalSessions: "сессий всего",
+    dashboardAvgSession: "мин средняя сессия",
+    dashboardDailyChart: "Фокус по дням (мин)",
+    dashboardTopTasks: "Топ задач по времени",
+    dashboardNoData: "Нет данных — начни первую сессию",
+    dashboardMinutes: "мин",
+    dashboardFocusChart: "Фокус-скор по сессиям",
 
     // SessionsPage
     backToTasks: "← Задачи",
@@ -89,6 +126,22 @@ const translations = {
     blockTooltip: "блок.",
     blocksLabel: "Блокировок",
     minuteLabel: "Минута",
+
+    // ProfilePage
+    profileTitle: "Профиль",
+    profileEmail: "Email",
+    profilePlan: "Тариф",
+    profilePlanFree: "Free",
+    profilePlanPro: "Pro",
+    profileTrial: "Триал до",
+    profileTrialExpired: "Триал истёк",
+    profileMember: "Участник с",
+    profileChangePwd: "Сменить пароль",
+    profileCurrentPwd: "Текущий пароль",
+    profileNewPwd: "Новый пароль",
+    profileConfirmPwd: "Подтвердите пароль",
+    profileSavePwd: "Сохранить",
+    profilePwdSuccess: "Пароль успешно изменён",
 
     // InsightsPage
     analyzing: "Анализирую...",
@@ -133,12 +186,32 @@ const translations = {
     pwdDigit: "At least one digit required",
     pwdMismatch: "Passwords do not match",
 
+    // TodayWidget
+    todaySessions: "sessions today",
+    todayMinutes: "min focused",
+    todayEmpty: "No sessions today yet — start your first one",
+
+    // ForgotPasswordPage
+    forgotTitle: "Forgot password?",
+    forgotDesc: "Enter your email — we'll send a reset link",
+    btnSendReset: "Send reset link",
+    forgotSuccess: "If the email is registered — check your inbox",
+    backToLogin: "← Back to login",
+
+    // ResetPasswordPage
+    resetTitle: "New password",
+    resetDesc: "Create a new password for your account",
+    placeholderNewPassword: "New password",
+    btnResetPassword: "Save password",
+    resetSuccess: "Password changed! You can now log in",
+    resetTokenMissing: "Link is invalid or expired",
+    resetPasswordReused: "This password has already been used. Please choose a new one.",
+
     // VerifyPage
     verifying: "Verifying email...",
     verifiedTitle: "Email verified!",
     verifiedDesc: "You can now use the app",
     goToTasks: "Go to tasks",
-    backToLogin: "Back to login",
     tokenMissing: "Token is missing",
 
     // TasksPage
@@ -159,8 +232,25 @@ const translations = {
     btnChecklist: "Checklist",
     btnSessions: "Sessions",
     btnDelete: "Delete",
+    btnArchive: "Archive",
+    btnRestore: "Restore",
+    archivedSection: "Archive",
+    noArchivedTasks: "No archived tasks",
     newSubtask: "New item",
     addSubtask: "+ Add",
+
+    navTasks: "Tasks",
+
+    // DashboardPage
+    dashboardTitle: "Dashboard",
+    dashboardTotalHours: "hours focused",
+    dashboardTotalSessions: "total sessions",
+    dashboardAvgSession: "min avg session",
+    dashboardDailyChart: "Focus by day (min)",
+    dashboardTopTasks: "Top tasks by time",
+    dashboardNoData: "No data yet — start your first session",
+    dashboardMinutes: "min",
+    dashboardFocusChart: "Focus score by session",
 
     // SessionsPage
     backToTasks: "← Tasks",
@@ -184,6 +274,22 @@ const translations = {
     blockTooltip: "block(s)",
     blocksLabel: "Blocks",
     minuteLabel: "Minute",
+
+    // ProfilePage
+    profileTitle: "Profile",
+    profileEmail: "Email",
+    profilePlan: "Plan",
+    profilePlanFree: "Free",
+    profilePlanPro: "Pro",
+    profileTrial: "Trial until",
+    profileTrialExpired: "Trial expired",
+    profileMember: "Member since",
+    profileChangePwd: "Change password",
+    profileCurrentPwd: "Current password",
+    profileNewPwd: "New password",
+    profileConfirmPwd: "Confirm password",
+    profileSavePwd: "Save",
+    profilePwdSuccess: "Password changed successfully",
 
     // InsightsPage
     analyzing: "Analyzing...",

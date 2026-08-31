@@ -1,7 +1,7 @@
 import logging
 from datetime import date, timedelta, timezone, datetime, UTC
 
-from app.domain.schemas.stats import DailyActivity, DailyStats, StreakStats
+from app.domain.schemas.stats import DailyActivity, DailyStats, StreakStats, TaskFocusStat, TasksStats, FocusScorePoint, FocusScoreHistory
 from app.unit_of_work.protocol import UoWProtocol
 
 logger = logging.getLogger(__name__)
@@ -57,6 +57,20 @@ class StatsService:
 
         logger.info("Daily stats: user_id=%d days=%d active_days=%d", user_id, days, len(by_date))
         return DailyStats(days=result)
+
+    async def get_focus_score_history(self, user_id: int, limit: int = 20) -> FocusScoreHistory:
+        async with self._uow:
+            rows = await self._uow.sessions.get_focus_score_history_for_user(user_id, limit)
+        points = [FocusScorePoint(task_title=r[0], focus_score=round(r[1], 1), ended_at=r[2]) for r in rows]
+        logger.info("Focus score history: user_id=%d points=%d", user_id, len(points))
+        return FocusScoreHistory(points=points)
+
+    async def get_top_tasks(self, user_id: int, limit: int = 5) -> TasksStats:
+        async with self._uow:
+            rows = await self._uow.sessions.get_top_tasks_for_user(user_id, limit)
+        tasks = [TaskFocusStat(title=r[0], total_minutes=r[1], sessions_count=r[2]) for r in rows]
+        logger.info("Top tasks stats: user_id=%d count=%d", user_id, len(tasks))
+        return TasksStats(tasks=tasks)
 
     @staticmethod
     def _calc_longest(sorted_dates: list[date]) -> int:

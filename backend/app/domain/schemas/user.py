@@ -44,3 +44,41 @@ class UserResponse(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8, max_length=128)
+    confirm_password: str
+
+    @model_validator(mode="after")
+    def validate_passwords(self) -> "ResetPasswordRequest":
+        if self.new_password != self.confirm_password:
+            raise ValueError("Пароли не совпадают")
+        if not _PASSWORD_RE.match(self.new_password):
+            raise ValueError(
+                "Пароль должен содержать минимум одну заглавную букву, "
+                "одну строчную и одну цифру"
+            )
+        return self
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8, max_length=128)
+    confirm_password: str
+
+    @model_validator(mode="after")
+    def validate_passwords(self) -> "ChangePasswordRequest":
+        if self.new_password != self.confirm_password:
+            raise ValueError("Пароли не совпадают")
+        if not _PASSWORD_RE.match(self.new_password):
+            raise ValueError(
+                "Пароль должен содержать минимум одну заглавную букву, "
+                "одну строчную и одну цифру"
+            )
+        return self

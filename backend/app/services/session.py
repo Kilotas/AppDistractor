@@ -70,6 +70,10 @@ class SessionService:
                 raise NotFoundError("Task", task_id)
             return await self._uow.sessions.get_by_task_id(task_id)
 
+    async def get_active_for_user(self, user_id: int) -> list[Session]:
+        async with self._uow:
+            return await self._uow.sessions.get_active_for_user(user_id)
+
     @staticmethod
     def _calc_focus_score(session: Session) -> float:
         """

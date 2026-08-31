@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, clearToken, isGuest } from "../api/client";
-import type { Task, WhitelistEntry, StreakStats, DailyActivity, Subtask } from "../api/client";
+import type { Task, WhitelistEntry, StreakStats, DailyActivity, Subtask, Session } from "../api/client";
 import { useT } from "../i18n";
-import LangToggle from "../components/LangToggle";
+import AppLayout from "../components/AppLayout";
+import LiveTimer from "../components/LiveTimer";
 import styles from "./TasksPage.module.css";
 
 function heatmapLevel(minutes: number): number {
@@ -42,9 +43,15 @@ export default function TasksPage() {
   const [editingSubtask, setEditingSubtask] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
 
+  // Archive
+  const [showArchive, setShowArchive] = useState(false);
+
   // Stats
   const [streak, setStreak] = useState<StreakStats | null>(null);
   const [daily, setDaily] = useState<DailyActivity[]>([]);
+
+  // Активные сессии: task_id → Session
+  const [activeMap, setActiveMap] = useState<Map<number, Session>>(new Map());
 
   useEffect(() => {
     loadTasks();
@@ -53,9 +60,14 @@ export default function TasksPage() {
 
   async function loadStats() {
     try {
-      const [s, d] = await Promise.all([api.stats.streak(), api.stats.daily(30)]);
+      const [s, d, active] = await Promise.all([
+        api.stats.streak(),
+        api.stats.daily(30),
+        api.activeSessions.list(),
+      ]);
       setStreak(s);
       setDaily(d.days);
+      setActiveMap(new Map(active.map((sess) => [sess.task_id, sess])));
     } catch {
       // stats are non-critical, ignore errors
     }
@@ -174,6 +186,17 @@ export default function TasksPage() {
     }
   }
 
+  async function archiveTask(id: number, is_active: boolean) {
+    try {
+      const updated = await api.tasks.setActive(id, is_active);
+      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      if (!is_active && openWhitelist === id) setOpenWhitelist(null);
+      if (!is_active && openSubtasks === id) setOpenSubtasks(null);
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
+
   async function deleteSubtask(taskId: number, subtaskId: number) {
     try {
       await api.subtasks.delete(taskId, subtaskId);
@@ -186,18 +209,10 @@ export default function TasksPage() {
   if (loading) return <div className={styles.center}>{t("loading")}</div>;
 
   return (
+    <AppLayout>
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>FocusVoid</h1>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <LangToggle />
-          <button
-            className={styles.logoutBtn}
-            onClick={() => { clearToken(); navigate("/login"); }}
-          >
-            {t("logout")}
-          </button>
-        </div>
+        <h1 className={styles.title}>{t("navTasks")}</h1>
       </header>
 
       {error && <div className={styles.error}>{error}</div>}
@@ -255,6 +270,31 @@ export default function TasksPage() {
         </div>
       )}
 
+      {/* Сводка сегодня */}
+      {(() => {
+        const todayStr = new Date().toISOString().split("T")[0];
+        const today = daily.find((d) => d.date === todayStr);
+        return (
+          <div className={styles.todayWidget}>
+            {today && today.sessions_count > 0 ? (
+              <>
+                <div className={styles.todayStat}>
+                  <span className={styles.todayValue}>🎯 {today.sessions_count}</span>
+                  <span className={styles.todayLabel}>{t("todaySessions")}</span>
+                </div>
+                <div className={styles.todayDivider} />
+                <div className={styles.todayStat}>
+                  <span className={styles.todayValue}>{today.focus_minutes}</span>
+                  <span className={styles.todayLabel}>{t("todayMinutes")}</span>
+                </div>
+              </>
+            ) : (
+              <span className={styles.todayEmpty}>{t("todayEmpty")}</span>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Heatmap */}
       {daily.length > 0 && (
         <div className={styles.heatmapCard}>
@@ -299,17 +339,29 @@ export default function TasksPage() {
       </form>
 
       {/* Список задач */}
-      {tasks.length === 0 ? (
+      {tasks.filter((t) => t.is_active).length === 0 ? (
         <div className={styles.empty}>{t("noTasks")}</div>
       ) : (
         <div className={styles.taskList}>
-          {tasks.map((task) => (
-            <div key={task.id} className={styles.taskCard}>
+          {tasks.filter((task) => task.is_active).map((task) => {
+            const activeSession = activeMap.get(task.id);
+            return (
+            <div key={task.id} className={`${styles.taskCard} ${activeSession ? styles.taskCardActive : ""}`}>
               <div className={styles.taskTop}>
                 <div>
                   <div className={styles.taskTitle}>{task.title}</div>
                   {task.description && (
                     <div className={styles.taskDesc}>{task.description}</div>
+                  )}
+                  {task.subtask_count > 0 && (
+                    <div className={styles.subtaskProgress}>
+                      {task.completed_count}/{task.subtask_count}
+                    </div>
+                  )}
+                  {activeSession && (
+                    <div className={styles.liveTimerBadge}>
+                      <LiveTimer startedAt={activeSession.started_at} />
+                    </div>
                   )}
                 </div>
                 <div className={styles.taskActions}>
@@ -330,6 +382,13 @@ export default function TasksPage() {
                     onClick={() => toggleWhitelist(task.id)}
                   >
                     Whitelist
+                  </button>
+                  <button
+                    className={styles.btnSecondary}
+                    onClick={() => archiveTask(task.id, false)}
+                    title={t("btnArchive")}
+                  >
+                    ↓
                   </button>
                   <button
                     className={styles.btnDanger}
@@ -467,9 +526,52 @@ export default function TasksPage() {
                 </div>
               )}
             </div>
-          ))}
+          );})}
+        </div>
+      )}
+
+      {/* Архив */}
+      {tasks.some((t) => !t.is_active) && (
+        <div className={styles.archiveSection}>
+          <button
+            className={styles.archiveToggle}
+            onClick={() => setShowArchive((v) => !v)}
+          >
+            {t("archivedSection")} ({tasks.filter((t) => !t.is_active).length}) {showArchive ? "▲" : "▼"}
+          </button>
+          {showArchive && (
+            <div className={styles.taskList}>
+              {tasks.filter((task) => !task.is_active).map((task) => (
+                <div key={task.id} className={`${styles.taskCard} ${styles.taskCardArchived}`}>
+                  <div className={styles.taskTop}>
+                    <div>
+                      <div className={styles.taskTitle}>{task.title}</div>
+                      {task.description && (
+                        <div className={styles.taskDesc}>{task.description}</div>
+                      )}
+                    </div>
+                    <div className={styles.taskActions}>
+                      <button
+                        className={styles.btnSecondary}
+                        onClick={() => archiveTask(task.id, true)}
+                      >
+                        {t("btnRestore")}
+                      </button>
+                      <button
+                        className={styles.btnDanger}
+                        onClick={() => deleteTask(task.id)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
+    </AppLayout>
   );
 }

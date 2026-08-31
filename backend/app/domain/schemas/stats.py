@@ -26,3 +26,23 @@ class DailyActivity(BaseModel):
 
 class DailyStats(BaseModel):
     days: list[DailyActivity]
+
+
+class TaskFocusStat(BaseModel):
+    title: str
+    total_minutes: int
+    sessions_count: int
+
+
+class TasksStats(BaseModel):
+    tasks: list[TaskFocusStat]
+
+
+class FocusScorePoint(BaseModel):
+    task_title: str
+    focus_score: float
+    ended_at: str
+
+
+class FocusScoreHistory(BaseModel):
+    points: list[FocusScorePoint]

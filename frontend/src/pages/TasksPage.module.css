@@ -90,6 +90,45 @@
   background: var(--border);
 }
 
+/* ── Сводка сегодня ───────────────────────── */
+.todayWidget {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 20px;
+}
+
+.todayStat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.todayValue {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.todayLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.todayDivider {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+}
+
+.todayEmpty {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 /* ── Heatmap ──────────────────────────────── */
 .heatmapCard {
   background: var(--surface);
@@ -163,6 +202,43 @@
   gap: 12px;
 }
 
+.taskCardActive {
+  border-color: var(--accent);
+  border-left: 3px solid var(--accent);
+  background: linear-gradient(135deg, var(--surface), color-mix(in srgb, var(--accent) 5%, var(--surface)));
+}
+
+.taskCardArchived {
+  opacity: 0.55;
+}
+
+.archiveSection {
+  margin-top: 8px;
+}
+
+.archiveToggle {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-bottom: 8px;
+}
+.archiveToggle:hover { color: var(--text); }
+
+.liveTimerBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 3px 10px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
 .taskTop {
   display: flex;
   align-items: flex-start;
@@ -172,6 +248,7 @@
 
 .taskTitle { font-weight: 600; font-size: 15px; color: var(--text); }
 .taskDesc { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+.subtaskProgress { font-size: 12px; color: var(--text-2); margin-top: 4px; font-variant-numeric: tabular-nums; }
 
 .taskActions { display: flex; gap: 6px; flex-shrink: 0; }
 

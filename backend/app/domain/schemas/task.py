@@ -23,3 +23,5 @@ class TaskResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    subtask_count: int = 0
+    completed_count: int = 0

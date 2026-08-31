@@ -33,6 +33,14 @@ async def stop_session(
     return await service.stop(session_id)
 
 
+@router.get("/sessions/active", response_model=list[SessionResponse])
+async def get_active_sessions(
+    current_user: User = Depends(get_verified_user),
+    service: SessionService = Depends(get_session_service),
+):
+    return await service.get_active_for_user(current_user.id)
+
+
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
 async def get_session(
     session_id: int,

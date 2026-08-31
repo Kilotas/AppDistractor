@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, setToken, setGuest, clearToken } from "../api/client";
 import { useT } from "../i18n";
 import LangToggle from "../components/LangToggle";
@@ -161,6 +161,14 @@ export default function LoginPage() {
           }}>
             {loading ? "..." : mode === "login" ? t("btnLogin") : t("btnRegister")}
           </button>
+
+          {mode === "login" && (
+            <div style={{ textAlign: "right" }}>
+              <Link to="/forgot-password" style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "none" }}>
+                {t("forgotTitle")}
+              </Link>
+            </div>
+          )}
         </form>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "20px 0 4px" }}>
