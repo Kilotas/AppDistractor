@@ -532,6 +532,13 @@ async function init() {
     applyI18n();
   });
 
+  // Обновляем ссылку на фронтенд если задан продакшн URL
+  const { frontendUrl } = await chrome.storage.local.get("frontendUrl");
+  if (frontendUrl) {
+    const link = document.getElementById("manage-link");
+    if (link) link.href = `${frontendUrl}/tasks`;
+  }
+
   const { authToken } = await chrome.storage.local.get("authToken");
   if (!authToken) { showScreen("auth"); return; }
 

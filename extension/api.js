@@ -1,4 +1,9 @@
-const BASE_URL = "http://localhost:8000/api/v1";
+const DEFAULT_URL = "http://localhost:8000/api/v1";
+
+async function getBaseUrl() {
+  const { apiBaseUrl } = await chrome.storage.local.get("apiBaseUrl");
+  return apiBaseUrl || DEFAULT_URL;
+}
 
 async function getToken() {
   const { authToken } = await chrome.storage.local.get("authToken");
@@ -19,7 +24,8 @@ async function request(method, path, body = null, authenticated = true) {
     options.body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, options);
+  const baseUrl = await getBaseUrl();
+  const response = await fetch(`${baseUrl}${path}`, options);
 
   if (response.status === 401) {
     // Токен протух — чистим
