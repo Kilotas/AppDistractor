@@ -6,7 +6,7 @@ import { useT } from "../i18n";
 import AppLayout from "../components/AppLayout";
 import styles from "./ProfilePage.module.css";
 
-function validatePassword(pwd: string, t: (k: string) => string): string | null {
+function validatePassword(pwd: string, t: (k: any) => string): string | null {
   if (pwd.length < 8) return t("pwdMin");
   if (!/[A-Z]/.test(pwd)) return t("pwdUpper");
   if (!/[a-z]/.test(pwd)) return t("pwdLower");
