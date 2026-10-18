@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   Cell, CartesianGrid, LineChart, Line, ReferenceLine,
@@ -11,7 +10,6 @@ import AppLayout from "../components/AppLayout";
 import styles from "./DashboardPage.module.css";
 
 export default function DashboardPage() {
-  const navigate = useNavigate();
   const { t, locale } = useT();
 
   const [daily, setDaily] = useState<DailyActivity[]>([]);
@@ -91,7 +89,7 @@ export default function DashboardPage() {
                 <Tooltip
                   contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
                   labelStyle={{ color: "var(--text)" }}
-                  formatter={(v: number) => [`${v} ${t("dashboardMinutes")}`, ""]}
+                  formatter={(v) => [`${v} ${t("dashboardMinutes")}`, ""]}
                 />
                 <Bar dataKey="min" radius={[4, 4, 0, 0]}>
                   {chartData.map((entry, i) => (
@@ -121,7 +119,7 @@ export default function DashboardPage() {
                   <ReferenceLine y={80} stroke="var(--accent)" strokeDasharray="4 4" strokeOpacity={0.4} />
                   <Tooltip
                     contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
-                    formatter={(v: number, _: string, props: any) => [`${v}`, props.payload.task]}
+                    formatter={(v, _, props: any) => [`${v}`, props.payload.task]}
                     labelFormatter={(l) => `Сессия ${l}`}
                   />
                   <Line

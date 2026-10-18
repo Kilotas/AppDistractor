@@ -1,5 +1,5 @@
 import { useT } from "../i18n";
-import type { Lang, Theme } from "../i18n";
+import type { Lang } from "../i18n";
 
 export default function LangToggle() {
   const { lang, setLang, theme, setTheme } = useT();
