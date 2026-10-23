@@ -53,8 +53,10 @@ export async function register(email, password, confirmPassword) {
 }
 
 // ── Tasks ─────────────────────────────────────────────
+// /tasks/active не считает подзадачи — берём /tasks/ (там subtask_count/completed_count) и фильтруем
 export async function getTasks() {
-  return request("GET", "/tasks/active");
+  const tasks = await request("GET", "/tasks/");
+  return tasks.filter(t => t.is_active);
 }
 
 export async function getTask(taskId) {
