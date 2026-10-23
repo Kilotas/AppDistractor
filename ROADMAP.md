@@ -102,7 +102,7 @@ git worktree add ../fv-popup-subtasks -b feat/popup-subtasks   # Этап 6
 
 ## Этап 6. Фичи
 
-- [ ] **[dev]** Подзадачи в попапе расширения (`extension/popup/popup.js`, `extension/api.js`; API `subtasks` уже есть)
+- [x] **[dev]** Подзадачи в попапе расширения (`extension/popup/popup.js`, `extension/api.js`; API `subtasks` уже есть)
 - [x] **[dev]** Чёрный список: `tasks.block_mode` (whitelist/blacklist), переключатель на `/tasks`, расширение блокирует только домены из списка. Доступно всем, без Pro
 - [ ] **[dev]** Дневная цель с прогресс-баром (поле в User, миграция, виджет на `/tasks` и в попапе)
 - [x] **[dev]** «Что отвлекает»: топ сайтов, час пика и типичная минута срыва — `GET /stats/distractions`, карточка на `/dashboard`, блок в недельном письме, факты в AI-инсайтах задачи

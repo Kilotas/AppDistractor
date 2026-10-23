@@ -157,8 +157,8 @@ extension/
 ```
 Готово ✅                         В работе / не хватает ⚠️               Не начато ⬜
 ───────────────────────────────  ─────────────────────────────────────  ─────────────────────────────
-Auth, guest, reset, history      Письма не доходят на проде:            Подзадачи в попапе расширения
-Tasks / subtasks / sessions        Resend шлёт с onboarding@resend.dev  Дневная цель с прогресс-баром
+Auth, guest, reset, history      Письма не доходят на проде:            Дневная цель с прогресс-баром
+Tasks / subtasks / sessions        Resend шлёт с onboarding@resend.dev
 Whitelist / blacklist + блокировка → задать YANDEX_SMTP_* на Railway
 Stats, streak, focus score         или подтвердить домен в Resend
 AI insights (код)                ANTHROPIC_API_KEY не задан на Railway
@@ -170,6 +170,7 @@ Billing (код)
 resend-verification по email
 Тесты backend + GitHub Actions CI
 «Что отвлекает» (дашборд, письмо)
+Подзадачи в попапе расширения
 ```
 
 ### Детали готовых фич
@@ -180,7 +181,7 @@ resend-verification по email
 - **Stats:** `GET /stats/streak`, `GET /stats/daily?days=30`, `GET /stats/focus-score-history`, `GET /stats/distractions?days=30&tz_offset_minutes=180` (топ доменов, попытки по часам в поясе юзера, медиана `session_minute`; считается из `BlockedEvent`). Тот же расчёт идёт в недельное письмо (пояс из `Routine.timezone_offset`) и в промпт AI-инсайтов задачи.
 - **Frontend страницы:** `/tasks`, `/dashboard`, `/profile`, `/forgot-password`, `/reset-password`, `/routines`, `/tasks/:id/sessions`, `/sessions/:id/stats`, `/tasks/:id/insights`; `AppLayout` — sidebar.
 - **LiveTimer:** тикает локально через `setInterval`, без polling.
-- **Расширение:** помодоро (focus/break/long break, SVG кольцо, notifications), звуки (Web Audio, `sounds.js`), RU/EN (своя MESSAGES система, `chrome.storage.local` key `extLang`), тёмная blocked.html со счётчиком.
+- **Расширение:** помодоро (focus/break/long break, SVG кольцо, notifications), звуки (Web Audio, `sounds.js`), RU/EN (своя MESSAGES система, `chrome.storage.local` key `extLang`), тёмная blocked.html со счётчиком, чек-лист подзадач на экране сессии (добавить / отметить, прогресс `2/5` и в списке задач).
 - **i18n:** `useT()`, `LanguageProvider`, localStorage, строки в `frontend/src/i18n/index.tsx`.
 - **Темы:** dark/light через CSS custom properties; `#0b0f1a` фон, `#111827` карточки, `#4f7df9` акцент.
 

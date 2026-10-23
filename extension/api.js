@@ -61,6 +61,19 @@ export async function getTask(taskId) {
   return request("GET", `/tasks/${taskId}`);
 }
 
+// ── Subtasks ──────────────────────────────────────────
+export async function getSubtasks(taskId) {
+  return request("GET", `/tasks/${taskId}/subtasks`);
+}
+
+export async function createSubtask(taskId, title) {
+  return request("POST", `/tasks/${taskId}/subtasks`, { title });
+}
+
+export async function updateSubtask(taskId, subtaskId, data) {
+  return request("PATCH", `/tasks/${taskId}/subtasks/${subtaskId}`, data);
+}
+
 // ── Whitelist ─────────────────────────────────────────
 export async function getWhitelist(taskId) {
   return request("GET", `/tasks/${taskId}/whitelist`);
