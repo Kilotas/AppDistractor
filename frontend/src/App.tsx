@@ -28,7 +28,8 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
     if (!token || status !== "checking") return;
     api.auth.me()
       .then((user) => {
-        if (user.is_verified) { verifiedToken = token; setStatus("verified"); }
+        // !== false: старый бэкенд без поля is_verified не должен запирать всех
+        if (user.is_verified !== false) { verifiedToken = token; setStatus("verified"); }
         else setStatus("unverified");
       })
       // Сеть/сервер упали — не блокируем UI, страницы сами покажут ошибку

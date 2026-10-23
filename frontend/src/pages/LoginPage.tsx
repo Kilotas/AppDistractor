@@ -52,7 +52,7 @@ export default function LoginPage() {
         navigate("/verify-email");
       } else {
         const user = await api.auth.me();
-        navigate(user.is_verified ? "/tasks" : "/verify-email");
+        navigate(user.is_verified === false ? "/verify-email" : "/tasks");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("error"));
