@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api, setToken, setGuest, clearToken } from "../api/client";
+import { api, setToken, setGuest } from "../api/client";
 import { useT } from "../i18n";
 import LangToggle from "../components/LangToggle";
 
@@ -16,7 +16,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
-  const [checkEmail, setCheckEmail] = useState(false);
 
   function validatePassword(password: string): string | null {
     if (password.length < 8) return t("pwdMin");
@@ -50,9 +49,10 @@ export default function LoginPage() {
         : await api.auth.register(email, password, confirmPassword);
       setToken(result.access_token);
       if (mode === "register") {
-        setCheckEmail(true);
+        navigate("/verify-email");
       } else {
-        navigate("/tasks");
+        const user = await api.auth.me();
+        navigate(user.is_verified ? "/tasks" : "/verify-email");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("error"));
@@ -74,27 +74,6 @@ export default function LoginPage() {
     } finally {
       setGuestLoading(false);
     }
-  }
-
-  if (checkEmail) {
-    return (
-      <div style={wrapStyle}>
-        <div style={cardStyle}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📧</div>
-          <h2 style={{ marginBottom: 8, color: "var(--text)" }}>{t("checkEmailTitle")}</h2>
-          <p style={{ color: "var(--text-2)", fontSize: 14, marginBottom: 24 }}>
-            {t("checkEmailDesc")} <strong style={{ color: "var(--text)" }}>{email}</strong>
-          </p>
-          <ResendButton onResend={async () => { await api.auth.resendVerification(email); }} />
-          <button onClick={() => { clearToken(); setCheckEmail(false); }} style={{
-            marginTop: 12, background: "none", border: "none", color: "var(--text-muted)",
-            fontSize: 13, cursor: "pointer",
-          }}>
-            {t("switchAccount")}
-          </button>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -163,7 +142,13 @@ export default function LoginPage() {
           </button>
 
           {mode === "login" && (
-            <div style={{ textAlign: "right" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <Link
+                to={`/verify-email${email ? `?email=${encodeURIComponent(email)}` : ""}`}
+                style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "none" }}
+              >
+                {t("noEmailLink")}
+              </Link>
               <Link to="/forgot-password" style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "none" }}>
                 {t("forgotTitle")}
               </Link>
@@ -213,24 +198,3 @@ const inputStyle: React.CSSProperties = {
   background: "var(--surface-2)",
   color: "var(--text)",
 };
-
-function ResendButton({ onResend }: { onResend: () => Promise<void> }) {
-  const { t } = useT();
-  const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  async function handle() {
-    setLoading(true);
-    try { await onResend(); setSent(true); } finally { setLoading(false); }
-  }
-
-  if (sent) return <p style={{ fontSize: 13, color: "var(--success)" }}>{t("resendSuccess")}</p>;
-  return (
-    <button onClick={handle} disabled={loading} style={{
-      background: "none", border: "1px solid var(--border)", borderRadius: 8,
-      padding: "8px 16px", fontSize: 13, color: "var(--text-2)", cursor: "pointer",
-    }}>
-      {loading ? "..." : t("resendBtn")}
-    </button>
-  );
-}

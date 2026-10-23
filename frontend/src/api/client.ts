@@ -79,6 +79,8 @@ export interface User {
   email: string;
   plan: "free" | "pro";
   trial_ends_at: string | null;
+  is_guest: boolean;
+  is_verified: boolean;
   created_at: string;
 }
 

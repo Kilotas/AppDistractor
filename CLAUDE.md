@@ -156,6 +156,7 @@ Routines + ссылка в sidebar      LEMONSQUEEZY_* не заданы на Ra
 Billing (код)
 Деплой на Railway (3 сервиса)
 resend-verification по email
+Экран /verify-email (вместо 403)
 ```
 
 ### Детали готовых фич
@@ -164,7 +165,7 @@ resend-verification по email
 - **Задачи:** CRUD, архив (`is_active`), подзадачи с позициями и mini-progress (`subtask_count`, `completed_count` через LEFT JOIN), `GET /tasks/{id}/insights`.
 - **Сессии:** `GET /sessions/active` — все активные сессии одним запросом; WhitelistEntry с IDNA-кодированием; BlockedEvent.
 - **Stats:** `GET /stats/streak`, `GET /stats/daily?days=30`, `GET /stats/focus-score-history`.
-- **Frontend страницы:** `/tasks`, `/dashboard`, `/profile`, `/forgot-password`, `/reset-password`, `/routines`, `/tasks/:id/sessions`, `/sessions/:id/stats`, `/tasks/:id/insights`; `AppLayout` — sidebar.
+- **Frontend страницы:** `/verify-email` (неподтверждённый юзер; `RequireAuth` проверяет `is_verified` через `/auth/me` раз на токен), `/tasks`, `/dashboard`, `/profile`, `/forgot-password`, `/reset-password`, `/routines`, `/tasks/:id/sessions`, `/sessions/:id/stats`, `/tasks/:id/insights`; `AppLayout` — sidebar.
 - **LiveTimer:** тикает локально через `setInterval`, без polling.
 - **Расширение:** помодоро (focus/break/long break, SVG кольцо, notifications), звуки (Web Audio, `sounds.js`), RU/EN (своя MESSAGES система, `chrome.storage.local` key `extLang`), тёмная blocked.html со счётчиком.
 - **i18n:** `useT()`, `LanguageProvider`, localStorage, строки в `frontend/src/i18n/index.tsx`.
