@@ -15,9 +15,9 @@ class InsightService:
     def __init__(self, uow: UoWProtocol) -> None:
         self._uow = uow
 
-    async def get_for_task(self, task_id: int) -> TaskInsights:
+    async def get_for_task(self, user_id: int, task_id: int) -> TaskInsights:
         async with self._uow:
-            task = await self._uow.tasks.get_by_id(task_id)
+            task = await self._uow.tasks.get_by_id_for_user(task_id, user_id)
             if task is None:
                 raise NotFoundError("Task", task_id)
 
