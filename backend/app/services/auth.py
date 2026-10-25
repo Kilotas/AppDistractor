@@ -92,19 +92,19 @@ class AuthService:
             logger.info("Email verified for user id=%d email=%s", user.id, user.email)
             return TokenResponse(access_token=create_access_token(user.id))
 
-    async def resend_verification(self, user: User) -> None:
-        if user.is_verified:
-            logger.debug("Resend verification skipped — user id=%d already verified", user.id)
-            return
+    async def resend_verification(self, email: str) -> None:
         async with self._uow:
-            db_user = await self._uow.users.get_by_id(user.id)
-            if db_user is None:
-                raise NotFoundError("User", user.id)
+            user = await self._uow.users.get_by_email(email)
+            if user is None or user.is_guest or user.is_verified:
+                # Не раскрываем существование email — просто тихо возвращаем
+                logger.info("Resend verification: email not found, guest or verified, silently ignoring: %s", email)
+                return
             token = secrets.token_urlsafe(32)
-            db_user.verification_token = token
+            user.verification_token = token
             await self._uow.commit()
-            logger.info("Verification email resent to user id=%d email=%s", db_user.id, db_user.email)
-            await send_verification_email(db_user.email, token)
+            logger.info("Verification email resent to user id=%d email=%s", user.id, user.email)
+
+        await send_verification_email(user.email, token)
 
     async def create_guest(self) -> TokenResponse:
         async with self._uow:

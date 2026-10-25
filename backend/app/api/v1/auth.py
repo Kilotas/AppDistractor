@@ -5,6 +5,7 @@ from app.domain.models.user import User
 from app.domain.schemas.user import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
+    ResendVerificationRequest,
     ResetPasswordRequest,
     TokenResponse,
     UserLogin,
@@ -65,11 +66,11 @@ async def guest_login(
 @limiter.limit("3/minute")
 async def resend_verification(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    data: ResendVerificationRequest,
     service: AuthService = Depends(get_auth_service),
 ):
-    await service.resend_verification(current_user)
-    return {"detail": "Письмо отправлено"}
+    await service.resend_verification(data.email)
+    return {"detail": "Если email зарегистрирован и не подтверждён — письмо отправлено"}
 
 
 @router.post("/forgot-password")

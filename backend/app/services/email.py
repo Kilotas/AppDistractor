@@ -57,7 +57,7 @@ async def _send_via_resend(to_email: str, subject: str, html: str) -> None:
                 "Content-Type": "application/json",
             },
             json={
-                "from": "FocusVoid <onboarding@resend.dev>",
+                "from": settings.EMAIL_FROM,
                 "to": [to_email],
                 "subject": subject,
                 "html": html,

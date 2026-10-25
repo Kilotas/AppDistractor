@@ -4,12 +4,89 @@
 
 **FocusVoid** — productivity приложение. Пользователь ставит задачу → указывает белый список сайтов → Chrome-расширение блокирует всё остальное → логирование событий → статистика → AI-анализ задач.
 
+Репозиторий: https://github.com/Kilotas/AppDistractor (публичный — **никаких паролей и ключей в коммитах**).
+
+## Как Claude работает в этом проекте
+
+- **Перед началом задачи** — показать план схемой: какие слои затронуты и в каком порядке.
+  ```
+  Задача: <что делаем>
+  [frontend] LoginPage.tsx ──► [api] client.ts ──► [backend] api/v1/auth.py ──► services/auth.py
+  Шаги: 1) ...  2) ...  3) ...
+  Проверка: tsc / pytest / curl на /health
+  ```
+- **После задачи** — короткий итог: что изменено (файлы), чем проверено, что осталось.
+- План разработки по этапам — в [ROADMAP.md](ROADMAP.md). Брать задачи оттуда, отмечать выполненные `[x]`.
+- После каждой заметной фичи — обновлять раздел «Статус» ниже и чекбоксы в `ROADMAP.md`.
+- Секреты не читать и не печатать в чат; новые переменные окружения добавлять в `backend/.env.example` с пустым значением.
+
+## Архитектура
+
+```
+                         ┌──────────────────────────────┐
+  ┌──────────────┐  JWT  │  Backend  FastAPI  :8000     │      ┌──────────────┐
+  │ Frontend     │──────►│  /api/v1/*                   │─────►│ PostgreSQL   │
+  │ React + Vite │◄──────│                              │      │ (Alembic)    │
+  │ :5173        │       │  api/v1  →  services  →  UoW │      └──────────────┘
+  └──────────────┘       │              │       → repos │
+                         │              ▼               │
+  ┌──────────────┐  JWT  │  ┌────────────────────────┐  │
+  │ Chrome ext.  │──────►│  │ Внешние сервисы        │  │
+  │ MV3          │       │  │ • Яндекс SMTP / Resend │  │
+  │ background.js│       │  │ • Claude API (insights)│  │
+  └──────────────┘       │  │ • LemonSqueezy         │  │
+                         │  │ • Sentry               │  │
+                         │  └────────────────────────┘  │
+                         │  APScheduler: routines, :00  │
+                         └──────────────────────────────┘
+```
+
+Слои бэкенда (запрос идёт сверху вниз):
+
+```
+api/v1/<router>.py      HTTP, валидация (Pydantic schemas), Depends
+        │
+services/<name>.py      бизнес-логика, ошибки из app/exceptions.py
+        │
+unit_of_work/           SQLAlchemyUoW — транзакция, uow.users / uow.tasks / ...
+        │
+repositories/           async-запросы к БД
+        │
+domain/models/          SQLAlchemy модели
+```
+
+## Основные потоки
+
+**Фокус-сессия (ядро продукта):**
+```
+Frontend/Popup: POST /sessions/start (task_id)
+   └► background.js получает session + whitelist
+        └► declarativeNetRequest: правило BLOCK_ALL (prio 1) + allow для каждого домена (prio 2)
+             └► юзер открыл чужой сайт → редирект на blocked/blocked.html?url=...
+                  └► tabs.onUpdated ловит blocked.html → POST /events (BlockedEvent, дедуп 5 сек)
+Stop: POST /sessions/{id}/stop → правила снимаются → stats / focus score / insights
+```
+
+**Регистрация и подтверждение email:**
+```
+POST /auth/register ──► токен + письмо (verification_token)
+        │                    │
+        │              /verify?token=... ──► POST /auth/verify ──► is_verified=true
+        ▼
+неподтверждённый юзер: логин работает, но эндпоинты с проверкой verified → 403
+POST /auth/resend-verification {email}   (без авторизации, тихий ответ, 3/мин)
+```
+
+**Оплата:** `POST /billing/checkout` → LemonSqueezy checkout URL → оплата → `POST /billing/webhook` → `plan=pro`. Доступ: `user_has_access(user)` = PRO или 7-дневный триал.
+
+**Routines:** APScheduler каждый час в :00 → `run_scheduled()` → Morning Brief / End of Day / Weekly Summary на email.
+
 ## Стек
 
 - **Backend:** FastAPI + SQLAlchemy (async) + PostgreSQL + Alembic + APScheduler
 - **Frontend:** React + Vite + TypeScript + CSS Modules
 - **Extension:** Chrome Extension Manifest V3 (service worker)
-- **Email:** Яндекс SMTP (`aiosmtplib`), `omaroff.alen@yandex.kz`
+- **Email:** Яндекс SMTP (`aiosmtplib`) → Resend → лог
 - **AI:** Claude API (`claude-haiku-4-5-20251001`) для insights
 - **Billing:** LemonSqueezy
 - **Monitoring:** Sentry
@@ -17,14 +94,23 @@
 ## Запуск
 
 ```bash
+cp backend/.env.example .env      # compose читает .env из корня; все ключи опциональны
 docker compose up --build -d
 # frontend: http://localhost:5173
 # backend:  http://localhost:8000
 ```
 
-Тестовый аккаунт (локально):
-- Email: `alendos87@gmail.com`
-- is_verified=true, plan=pro (установить вручную через psql)
+Тестовый аккаунт: зарегистрируйся локально, затем выставь `is_verified=true`, `plan='pro'` вручную через psql.
+
+## Прод (Railway)
+
+```
+frontend  https://frontend-production-cb0f.up.railway.app   (Dockerfile.prod: vite build → serve)
+backend   https://backend-production-506f.up.railway.app     (Dockerfile.prod: alembic upgrade head при старте)
+postgres  Railway plugin
+```
+- URL API зашит в `frontend/Dockerfile.prod` как `ARG VITE_API_URL` (можно переопределить build-аргументом).
+- `frontend/nginx.conf` больше не используется прод-сборкой.
 
 ## Структура проекта
 
@@ -50,76 +136,39 @@ frontend/
 extension/
   popup/                # popup.html + popup.js
   blocked/              # blocked.html + blocked.js
-  background.js         # service worker
+  background.js         # service worker, блокировка через declarativeNetRequest
   api.js                # общение с backend
 ```
 
-## Всё сделано ✅
+## Статус
 
-### Auth & Пользователи
-- JWT авторизация, email verification, rate limiting (slowapi)
-- Guest mode: `POST /auth/guest` — юзер с `is_guest=True`
-- Forgot password: `POST /auth/forgot-password`, `POST /auth/reset-password`
-- Change password (для залогиненного): `POST /auth/change-password`
-- **Password History** — запрет повторного использования последних 5 паролей
-  - Модель `PasswordHistory`, репозиторий `PasswordHistoryRepository`
-  - `UoW.password_history`
+```
+Готово ✅                         В работе / не хватает ⚠️               Не начато ⬜
+───────────────────────────────  ─────────────────────────────────────  ─────────────────────────────
+Auth, guest, reset, history      Письма не доходят на проде:            Подзадачи в попапе расширения
+Tasks / subtasks / sessions        Resend шлёт с onboarding@resend.dev  Дневная цель с прогресс-баром
+Whitelist + блокировка             → задать YANDEX_SMTP_* на Railway
+Stats, streak, focus score         или подтвердить домен в Resend
+AI insights (код)                ANTHROPIC_API_KEY не задан на Railway
+Routines + ссылка в sidebar      LEMONSQUEEZY_* не заданы на Railway
+Архив задач                      2 отключённых тома Postgres в Railway
+График фокус-скора (recharts)      (проверить и удалить)
+Billing (код)
+Деплой на Railway (3 сервиса)
+resend-verification по email
+```
 
-### Задачи и подзадачи
-- Tasks CRUD + Sessions start/stop
-- Subtasks: CRUD, позиции, mini-progress в карточке (`subtask_count`, `completed_count` через LEFT JOIN)
-- `GET /tasks/{id}/insights` — Claude AI анализ
+### Детали готовых фич
 
-### Сессии и события
-- `GET /sessions/active` — все активные сессии юзера одним запросом
-- WhitelistEntry с IDNA-кодированием доменов
-- BlockedEvent логирование
-
-### Stats & Streak
-- `GET /stats/streak` → StreakStats (current/longest streak, total days, last active)
-- `GET /stats/daily?days=30` → DailyStats (DailyActivity по дням)
-- `GET /stats/focus-score-history` — история фокус-скора
-
-### Routines (scheduled email digests)
-- APScheduler в lifespan (каждый час вызывает `run_scheduled()`)
-- 3 типа: Morning Brief, End of Day, Weekly Summary
-- Модель `Routine`, репозиторий, сервис с HTML шаблонами
-- `GET /routines`, `PATCH /routines/{type}`
-- Frontend: `RoutinesPage.tsx`
-- **Важно:** нужно применить миграцию `d1e2f3a4b5c6_add_routines` + добавить ссылку в nav (AppLayout)
-
-### Billing
-- LemonSqueezy: `POST /billing/checkout`, `POST /billing/webhook`
-- `user_has_access(user)` — plan=PRO или 7-дневный триал
-
-### Frontend страницы
-- `/tasks` — TasksPage: список задач, streak виджет, heatmap 30 дней, today summary, live timer-таблетка
-- `/dashboard` — DashboardPage: обзор статистики
-- `/profile` — ProfilePage: email, план, триал, смена пароля, выход
-- `/forgot-password`, `/reset-password` — flow сброса пароля
-- `/routines` — настройки рутин
-- `/tasks/:id/sessions`, `/sessions/:id/stats`, `/tasks/:id/insights`
-- `AppLayout` — sidebar навигация
-
-### LiveTimer
-- `LiveTimer.tsx` — тикает локально через `setInterval`, без polling к API
-- TasksPage: карточка подсвечивается + таймер-таблетка при активной сессии
-
-### Chrome Extension
-- Manifest V3, service worker, название FocusVoid
-- Помодоро таймер: focus/break/long break, SVG кольцо, Chrome notifications
-- Звуки (Web Audio API, `sounds.js`)
-- RU/EN локализация (собственная MESSAGES система, переключатель в popup)
-- blocked.html: тёмная тема, таймер, счётчик блокировок
-
-### i18n
-- `useT()` hook, `LanguageProvider`, хранится в localStorage
-- RU/EN строки в `frontend/src/i18n/index.tsx`
-- Расширение: собственная MESSAGES система (не chrome.i18n), хранится в `chrome.storage.local` key `extLang`
-
-### Темы
-- Dark/Light тема, CSS custom properties, localStorage
-- Основные цвета: `#0b0f1a` фон, `#111827` карточки, `#4f7df9` акцент
+- **Auth:** JWT, email verification, rate limiting (slowapi), guest mode (`POST /auth/guest`, `is_guest=True`), forgot/reset/change password, запрет последних 5 паролей (`PasswordHistory`, `UoW.password_history`).
+- **Задачи:** CRUD, архив (`is_active`), подзадачи с позициями и mini-progress (`subtask_count`, `completed_count` через LEFT JOIN), `GET /tasks/{id}/insights`.
+- **Сессии:** `GET /sessions/active` — все активные сессии одним запросом; WhitelistEntry с IDNA-кодированием; BlockedEvent.
+- **Stats:** `GET /stats/streak`, `GET /stats/daily?days=30`, `GET /stats/focus-score-history`.
+- **Frontend страницы:** `/tasks`, `/dashboard`, `/profile`, `/forgot-password`, `/reset-password`, `/routines`, `/tasks/:id/sessions`, `/sessions/:id/stats`, `/tasks/:id/insights`; `AppLayout` — sidebar.
+- **LiveTimer:** тикает локально через `setInterval`, без polling.
+- **Расширение:** помодоро (focus/break/long break, SVG кольцо, notifications), звуки (Web Audio, `sounds.js`), RU/EN (своя MESSAGES система, `chrome.storage.local` key `extLang`), тёмная blocked.html со счётчиком.
+- **i18n:** `useT()`, `LanguageProvider`, localStorage, строки в `frontend/src/i18n/index.tsx`.
+- **Темы:** dark/light через CSS custom properties; `#0b0f1a` фон, `#111827` карточки, `#4f7df9` акцент.
 
 ## Миграции Alembic (в порядке)
 
@@ -133,24 +182,11 @@ extension/
 | `6c60ed2bee3b` | add password_history table |
 | `d1e2f3a4b5c6` | add routines (**HEAD**) |
 
-## Следующие шаги 🔜
-
-### Деплой
-- **Railway** — нужен домен для LemonSqueezy и Resend
-- Зарегистрироваться на **LemonSqueezy**, вписать ключи в `.env`
-- После деплоя: `alembic upgrade head` применит все миграции
-
-### Фичи (задуманы, не сделаны)
-- Добавить ссылку на `/routines` в sidebar (AppLayout)
-- Архив задач (поле `is_active` уже есть в модели Task)
-- График фокус-скора на Dashboard (recharts уже в deps)
-- Подзадачи в попапе Chrome-расширения
-- Дневная цель с прогресс-баром
-
 ## Ключевые паттерны
 
 - **UoW паттерн**: `SQLAlchemyUoW` через `UoWProtocol` — все сервисы получают `uow` через DI
 - **DI через FastAPI Depends**: `get_auth_service`, `get_task_service` и т.д. в `api/deps.py`
 - **Email приоритет**: Яндекс SMTP → Resend → лог
 - **Все emails lowercase** при регистрации и поиске (`func.lower`)
+- **Не раскрываем существование email**: forgot-password и resend-verification всегда отвечают одинаково
 - **ConflictError** при старте сессии если уже есть активная → возвращает существующую

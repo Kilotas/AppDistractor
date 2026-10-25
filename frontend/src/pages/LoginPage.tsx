@@ -85,7 +85,7 @@ export default function LoginPage() {
           <p style={{ color: "var(--text-2)", fontSize: 14, marginBottom: 24 }}>
             {t("checkEmailDesc")} <strong style={{ color: "var(--text)" }}>{email}</strong>
           </p>
-          <ResendButton onResend={async () => { await api.auth.resendVerification(); }} />
+          <ResendButton onResend={async () => { await api.auth.resendVerification(email); }} />
           <button onClick={() => { clearToken(); setCheckEmail(false); }} style={{
             marginTop: 12, background: "none", border: "none", color: "var(--text-muted)",
             fontSize: 13, cursor: "pointer",

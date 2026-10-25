@@ -196,8 +196,8 @@ export const api = {
       ),
     verify: (token: string) =>
       request<{ access_token: string; token_type: string }>("POST", `/auth/verify?token=${encodeURIComponent(token)}`, undefined, false),
-    resendVerification: () =>
-      request<{ detail: string }>("POST", "/auth/resend-verification"),
+    resendVerification: (email: string) =>
+      request<{ detail: string }>("POST", "/auth/resend-verification", { email }, false),
     me: () => request<User>("GET", "/auth/me"),
     guest: () =>
       request<{ access_token: string; token_type: string }>("POST", "/auth/guest", undefined, false),
