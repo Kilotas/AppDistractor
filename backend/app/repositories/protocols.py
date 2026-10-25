@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Protocol, TypeVar, runtime_checkable
 
 from app.domain.models import Task, Session, WhitelistEntry, BlockedEvent
@@ -29,3 +30,8 @@ class WhitelistRepositoryProtocol(BaseRepositoryProtocol[WhitelistEntry], Protoc
 
 class BlockedEventRepositoryProtocol(BaseRepositoryProtocol[BlockedEvent], Protocol):
     async def get_by_session_id(self, session_id: int) -> list[BlockedEvent]: ...
+    async def get_for_user_since(
+        self, user_id: int, since: datetime
+    ) -> list[tuple[str, datetime, int | None]]: ...
+    async def get_top_domains_for_task(self, task_id: int, limit: int = 5) -> list[tuple[str, int]]: ...
+    async def get_session_minutes_for_task(self, task_id: int) -> list[int]: ...

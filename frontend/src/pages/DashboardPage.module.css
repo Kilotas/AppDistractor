@@ -121,3 +121,68 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+/* Distractions */
+.distractNone {
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.distractSummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin-bottom: 20px;
+}
+
+.distractCount {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.distractCountValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--warning);
+  font-variant-numeric: tabular-nums;
+}
+
+.distractFacts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text);
+  min-width: 0;
+}
+
+.distractGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.distractGrid > div {
+  min-width: 0;
+}
+
+.distractSubtitle {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 10px;
+}
+
+.distractBarFill {
+  height: 100%;
+  background: var(--warning);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+@media (max-width: 640px) {
+  .distractGrid {
+    grid-template-columns: 1fr;
+  }
+}

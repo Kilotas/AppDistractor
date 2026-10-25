@@ -1,7 +1,12 @@
 import logging
+import statistics
+from collections import Counter
 from datetime import date, timedelta, timezone, datetime, UTC
 
-from app.domain.schemas.stats import DailyActivity, DailyStats, StreakStats, TaskFocusStat, TasksStats, FocusScorePoint, FocusScoreHistory
+from app.domain.schemas.stats import (
+    DailyActivity, DailyStats, StreakStats, TaskFocusStat, TasksStats, FocusScorePoint, FocusScoreHistory,
+    DistractionStats, DomainCount,
+)
 from app.unit_of_work.protocol import UoWProtocol
 
 logger = logging.getLogger(__name__)
@@ -71,6 +76,43 @@ class StatsService:
         tasks = [TaskFocusStat(title=r[0], total_minutes=r[1], sessions_count=r[2]) for r in rows]
         logger.info("Top tasks stats: user_id=%d count=%d", user_id, len(tasks))
         return TasksStats(tasks=tasks)
+
+    async def get_distractions(
+        self, user_id: int, days: int = 30, tz_offset_minutes: int = 0, top: int = 5
+    ) -> DistractionStats:
+        """
+        Что отвлекает пользователя за последние days дней.
+        tz_offset_minutes — смещение локального времени от UTC (Москва = 180),
+        чтобы часы суток считались по часам пользователя, а не сервера.
+        """
+        since = datetime.now(UTC) - timedelta(days=days)
+        async with self._uow:
+            rows = await self._uow.blocked_events.get_for_user_since(user_id, since)
+
+        shift = timedelta(minutes=tz_offset_minutes)
+        domains = Counter(domain for domain, _, _ in rows)
+        by_hour = [0] * 24
+        for _, attempted_at, _ in rows:
+            by_hour[(attempted_at + shift).hour] += 1
+        minutes = [m for _, _, m in rows if m is not None]
+
+        result = DistractionStats(
+            days=days,
+            total_attempts=len(rows),
+            # при равенстве — по алфавиту, чтобы порядок не прыгал между запросами
+            top_domains=[
+                DomainCount(domain=d, count=c)
+                for d, c in sorted(domains.items(), key=lambda kv: (-kv[1], kv[0]))[:top]
+            ],
+            by_hour=by_hour,
+            peak_hour=by_hour.index(max(by_hour)) if rows else None,
+            typical_session_minute=statistics.median_low(minutes) if minutes else None,
+        )
+        logger.info(
+            "Distraction stats: user_id=%d days=%d attempts=%d peak_hour=%s",
+            user_id, days, result.total_attempts, result.peak_hour,
+        )
+        return result
 
     @staticmethod
     def _calc_longest(sorted_dates: list[date]) -> int:
