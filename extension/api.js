@@ -57,6 +57,10 @@ export async function getTasks() {
   return request("GET", "/tasks/active");
 }
 
+export async function getTask(taskId) {
+  return request("GET", `/tasks/${taskId}`);
+}
+
 // ── Whitelist ─────────────────────────────────────────
 export async function getWhitelist(taskId) {
   return request("GET", `/tasks/${taskId}/whitelist`);

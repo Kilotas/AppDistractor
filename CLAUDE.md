@@ -61,7 +61,9 @@ domain/models/          SQLAlchemy модели
 ```
 Frontend/Popup: POST /sessions/start (task_id)
    └► background.js получает session + whitelist
-        └► declarativeNetRequest: правило BLOCK_ALL (prio 1) + allow для каждого домена (prio 2)
+        └► declarativeNetRequest по task.block_mode:
+             whitelist — BLOCK_ALL (prio 1) + allow для каждого домена (prio 2)
+             blacklist — редирект только для доменов из списка (ID от 1000)
              └► юзер открыл чужой сайт → редирект на blocked/blocked.html?url=...
                   └► tabs.onUpdated ловит blocked.html → POST /events (BlockedEvent, дедуп 5 сек)
 Stop: POST /sessions/{id}/stop → правила снимаются → stats / focus score / insights
@@ -157,7 +159,7 @@ extension/
 ───────────────────────────────  ─────────────────────────────────────  ─────────────────────────────
 Auth, guest, reset, history      Письма не доходят на проде:            Подзадачи в попапе расширения
 Tasks / subtasks / sessions        Resend шлёт с onboarding@resend.dev  Дневная цель с прогресс-баром
-Whitelist + блокировка             → задать YANDEX_SMTP_* на Railway
+Whitelist / blacklist + блокировка → задать YANDEX_SMTP_* на Railway
 Stats, streak, focus score         или подтвердить домен в Resend
 AI insights (код)                ANTHROPIC_API_KEY не задан на Railway
 Routines + ссылка в sidebar      LEMONSQUEEZY_* не заданы на Railway
@@ -191,7 +193,8 @@ resend-verification по email
 | `b7c4d2e1f8a9` | add is_guest |
 | `c9e3f1a2b5d7` | add password_reset_token + password_reset_expires_at |
 | `6c60ed2bee3b` | add password_history table |
-| `d1e2f3a4b5c6` | add routines (**HEAD**) |
+| `d1e2f3a4b5c6` | add routines |
+| `e5f6a7b8c9d0` | add tasks.block_mode (**HEAD**) |
 
 ## Ключевые паттерны
 
