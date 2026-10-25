@@ -57,4 +57,4 @@ async def delete_whitelist_entry(
     current_user: User = Depends(get_verified_user),
     service: WhitelistService = Depends(get_whitelist_service),
 ) -> None:
-    await service.delete_entry(entry_id)
+    await service.delete_entry(current_user.id, entry_id)

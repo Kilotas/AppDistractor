@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, clearToken, isGuest } from "../api/client";
-import type { Task, WhitelistEntry, StreakStats, DailyActivity, Subtask, Session } from "../api/client";
+import type { Task, BlockMode, WhitelistEntry, StreakStats, DailyActivity, Subtask, Session } from "../api/client";
 import { useT } from "../i18n";
 import AppLayout from "../components/AppLayout";
 import LiveTimer from "../components/LiveTimer";
@@ -129,6 +129,15 @@ export default function TasksPage() {
       setWhitelist((prev) => [...prev, entry]);
       setNewDomain("");
       setNewLabel("");
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
+
+  async function setBlockMode(taskId: number, mode: BlockMode) {
+    try {
+      const updated = await api.tasks.setBlockMode(taskId, mode);
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
     } catch (e: any) {
       setError(e.message);
     }
@@ -381,7 +390,9 @@ export default function TasksPage() {
                     className={styles.btnSecondary}
                     onClick={() => toggleWhitelist(task.id)}
                   >
-                    Whitelist
+                    {task.block_mode === "blacklist"
+                      ? (locale === "ru-RU" ? "Чёрный список" : "Blacklist")
+                      : (locale === "ru-RU" ? "Белый список" : "Whitelist")}
                   </button>
                   <button
                     className={styles.btnSecondary}
@@ -479,10 +490,33 @@ export default function TasksPage() {
               {/* Whitelist */}
               {openWhitelist === task.id && (
                 <div className={styles.whitelist}>
-                  <div className={styles.whitelistTitle}>{locale === "ru-RU" ? "Разрешённые домены" : "Allowed domains"}</div>
+                  <div className={styles.modeToggle}>
+                    <button
+                      className={task.block_mode !== "blacklist" ? styles.modeBtnActive : styles.modeBtn}
+                      onClick={() => setBlockMode(task.id, "whitelist")}
+                    >
+                      {locale === "ru-RU" ? "Белый список" : "Whitelist"}
+                    </button>
+                    <button
+                      className={task.block_mode === "blacklist" ? styles.modeBtnActive : styles.modeBtn}
+                      onClick={() => setBlockMode(task.id, "blacklist")}
+                    >
+                      {locale === "ru-RU" ? "Чёрный список" : "Blacklist"}
+                    </button>
+                  </div>
+
+                  <div className={styles.whitelistTitle}>
+                    {task.block_mode === "blacklist"
+                      ? (locale === "ru-RU" ? "Заблокированные домены" : "Blocked domains")
+                      : (locale === "ru-RU" ? "Разрешённые домены" : "Allowed domains")}
+                  </div>
 
                   {whitelist.length === 0 ? (
-                    <div className={styles.whitelistEmpty}>{locale === "ru-RU" ? "Список пуст — все сайты будут заблокированы" : "Empty — all sites will be blocked"}</div>
+                    <div className={styles.whitelistEmpty}>
+                      {task.block_mode === "blacklist"
+                        ? (locale === "ru-RU" ? "Список пуст — ничего не будет заблокировано" : "Empty — nothing will be blocked")
+                        : (locale === "ru-RU" ? "Список пуст — все сайты будут заблокированы" : "Empty — all sites will be blocked")}
+                    </div>
                   ) : (
                     <div className={styles.domainList}>
                       {whitelist.map((entry) => (

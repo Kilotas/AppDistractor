@@ -82,11 +82,14 @@ export interface User {
   created_at: string;
 }
 
+export type BlockMode = "whitelist" | "blacklist";
+
 export interface Task {
   id: number;
   title: string;
   description: string | null;
   is_active: boolean;
+  block_mode: BlockMode;
   created_at: string;
   updated_at: string;
   subtask_count: number;
@@ -220,6 +223,8 @@ export const api = {
     delete: (id: number) => request<null>("DELETE", `/tasks/${id}`),
     setActive: (id: number, is_active: boolean) =>
       request<Task>("PATCH", `/tasks/${id}`, { is_active }),
+    setBlockMode: (id: number, block_mode: BlockMode) =>
+      request<Task>("PATCH", `/tasks/${id}`, { block_mode }),
   },
 
   whitelist: {

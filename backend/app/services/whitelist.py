@@ -36,10 +36,11 @@ class WhitelistService:
             await self._uow.commit()
             return entry
 
-    async def delete_entry(self, entry_id: int) -> None:
+    async def delete_entry(self, user_id: int, entry_id: int) -> None:
         async with self._uow:
             entry = await self._uow.whitelist.get_by_id(entry_id)
-            if entry is None:
+            # Чужую запись не отличаем от несуществующей — не раскрываем, что она есть
+            if entry is None or await self._uow.tasks.get_by_id_for_user(entry.task_id, user_id) is None:
                 raise NotFoundError("WhitelistEntry", entry_id)
             await self._uow.whitelist.delete(entry)
             await self._uow.commit()
