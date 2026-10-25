@@ -100,6 +100,15 @@ docker compose up --build -d
 # backend:  http://localhost:8000
 ```
 
+Тесты бэкенда (нужен Postgres с базой `*_test`; команда запуска контейнера — в `backend/tests/conftest.py`):
+
+```bash
+pip install -e "backend[dev]"
+cd backend && pytest            # база по умолчанию: localhost:5433/focus_test, иначе TEST_DATABASE_URL
+```
+
+CI (`.github/workflows/ci.yml`) на каждый PR и push в `main`: backend `pytest` + frontend `npm run lint` и `npm run build`.
+
 Тестовый аккаунт: зарегистрируйся локально, затем выставь `is_verified=true`, `plan='pro'` вручную через psql.
 
 ## Прод (Railway)
@@ -127,6 +136,7 @@ backend/
     services/           # бизнес-логика
     unit_of_work/       # SQLAlchemyUoW (UoW паттерн)
     exceptions.py       # NotFoundError, ConflictError, AuthError, ForbiddenError, PaymentRequiredError
+  tests/                # pytest через HTTP API на Postgres (conftest.py: БД, клиент, перехват писем)
 frontend/
   src/
     api/client.ts       # все API вызовы
@@ -156,6 +166,7 @@ Routines + ссылка в sidebar      LEMONSQUEEZY_* не заданы на Ra
 Billing (код)
 Деплой на Railway (3 сервиса)
 resend-verification по email
+Тесты backend + GitHub Actions CI
 ```
 
 ### Детали готовых фич

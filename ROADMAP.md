@@ -73,9 +73,10 @@ git worktree add ../fv-popup-subtasks -b feat/popup-subtasks   # Этап 6
 ## Этап 3. Командная работа и CI
 
 - [ ] **[owner]** GitHub → Settings → Branches: защитить `main` (только через PR, 1 approve)
-- [ ] **[dev]** Починить локальное окружение: `pip install -e "backend[dev]"` в `.venv` (сейчас нет `sentry_sdk` и др.)
-- [ ] **[dev]** Первые тесты в `backend/tests` (pytest + pytest-asyncio уже в `pyproject.toml`): auth (register / verify / resend / reset), sessions (start / stop / ConflictError), whitelist
-- [ ] **[dev]** GitHub Actions на каждый PR: backend `pytest`, frontend `npm run lint` + `npm run build`
+- [x] **[dev]** Починить локальное окружение: `pip install -e "backend[dev]"` в `.venv` (сейчас нет `sentry_sdk` и др.)
+- [x] **[dev]** Первые тесты в `backend/tests` (pytest + pytest-asyncio уже в `pyproject.toml`): auth (register / verify / resend / reset), sessions (start / stop / ConflictError), whitelist
+- [x] **[dev]** GitHub Actions на каждый PR: backend `pytest`, frontend `npm run lint` + `npm run build`
+- [ ] **[dev]** Проверять владельца в `POST /sessions/{id}/stop`, `GET /sessions/{id}` и `DELETE /whitelist/{id}` — сейчас любой залогиненный юзер может остановить чужую сессию или удалить чужой домен. Тест `test_cannot_stop_someone_elses_session` помечен `xfail(strict=True)`: после фикса снять пометку
 - [ ] **[dev]** Шаблон PR + короткий раздел «Как контрибьютить» в README
 
 **Готово, когда:** PR в `main` нельзя смёрджить с красным CI.
