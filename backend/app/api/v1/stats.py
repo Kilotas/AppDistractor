@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.api.deps import get_verified_user, get_uow
 from app.domain.models.user import User
-from app.domain.schemas.stats import DailyStats, StreakStats, TasksStats, FocusScoreHistory
+from app.domain.schemas.stats import DailyStats, DistractionStats, StreakStats, TasksStats, FocusScoreHistory
 from app.services.stats import StatsService
 from app.unit_of_work.sqlalchemy import SQLAlchemyUoW
 
@@ -44,3 +44,14 @@ async def get_daily(
     days: int = Query(default=30, ge=1, le=365),
 ) -> DailyStats:
     return await service.get_daily(current_user.id, days)
+
+
+@router.get("/distractions", response_model=DistractionStats)
+async def get_distractions(
+    current_user: User = Depends(get_verified_user),
+    service: StatsService = Depends(get_stats_service),
+    days: int = Query(default=30, ge=1, le=365),
+    # смещение от UTC в минутах, восток положительный (Москва = 180); от UTC-12 до UTC+14
+    tz_offset_minutes: int = Query(default=0, ge=-720, le=840),
+) -> DistractionStats:
+    return await service.get_distractions(current_user.id, days, tz_offset_minutes)

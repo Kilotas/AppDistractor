@@ -30,7 +30,7 @@ async def stop_session(
     current_user: User = Depends(get_verified_user),
     service: SessionService = Depends(get_session_service),
 ):
-    return await service.stop(session_id)
+    return await service.stop(current_user.id, session_id)
 
 
 @router.get("/sessions/active", response_model=list[SessionResponse])
@@ -47,7 +47,7 @@ async def get_session(
     current_user: User = Depends(get_verified_user),
     service: SessionService = Depends(get_session_service),
 ):
-    return await service.get(session_id)
+    return await service.get(current_user.id, session_id)
 
 
 @router.get("/tasks/{task_id}/sessions", response_model=list[SessionResponse])
@@ -65,8 +65,10 @@ async def list_sessions_for_task(
 async def list_events_for_session(
     session_id: int,
     current_user: User = Depends(get_verified_user),
+    session_service: SessionService = Depends(get_session_service),
     service: BlockedEventService = Depends(get_blocked_event_service),
 ):
+    await session_service.get(current_user.id, session_id)
     return await service.get_for_session(session_id)
 
 
@@ -74,6 +76,8 @@ async def list_events_for_session(
 async def get_session_stats(
     session_id: int,
     current_user: User = Depends(get_verified_user),
+    session_service: SessionService = Depends(get_session_service),
     service: BlockedEventService = Depends(get_blocked_event_service),
 ):
+    await session_service.get(current_user.id, session_id)
     return await service.get_stats(session_id)

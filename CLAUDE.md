@@ -61,7 +61,9 @@ domain/models/          SQLAlchemy модели
 ```
 Frontend/Popup: POST /sessions/start (task_id)
    └► background.js получает session + whitelist
-        └► declarativeNetRequest: правило BLOCK_ALL (prio 1) + allow для каждого домена (prio 2)
+        └► declarativeNetRequest по task.block_mode:
+             whitelist — BLOCK_ALL (prio 1) + allow для каждого домена (prio 2)
+             blacklist — редирект только для доменов из списка (ID от 1000)
              └► юзер открыл чужой сайт → редирект на blocked/blocked.html?url=...
                   └► tabs.onUpdated ловит blocked.html → POST /events (BlockedEvent, дедуп 5 сек)
 Stop: POST /sessions/{id}/stop → правила снимаются → stats / focus score / insights
@@ -100,6 +102,15 @@ docker compose up --build -d
 # backend:  http://localhost:8000
 ```
 
+Тесты бэкенда (нужен Postgres с базой `*_test`; команда запуска контейнера — в `backend/tests/conftest.py`):
+
+```bash
+pip install -e "backend[dev]"
+cd backend && pytest            # база по умолчанию: localhost:5433/focus_test, иначе TEST_DATABASE_URL
+```
+
+CI (`.github/workflows/ci.yml`) на каждый PR и push в `main`: backend `pytest` + frontend `npm run lint` и `npm run build`.
+
 Тестовый аккаунт: зарегистрируйся локально, затем выставь `is_verified=true`, `plan='pro'` вручную через psql.
 
 ## Прод (Railway)
@@ -127,6 +138,7 @@ backend/
     services/           # бизнес-логика
     unit_of_work/       # SQLAlchemyUoW (UoW паттерн)
     exceptions.py       # NotFoundError, ConflictError, AuthError, ForbiddenError, PaymentRequiredError
+  tests/                # pytest через HTTP API на Postgres (conftest.py: БД, клиент, перехват писем)
 frontend/
   src/
     api/client.ts       # все API вызовы
@@ -147,7 +159,7 @@ extension/
 ───────────────────────────────  ─────────────────────────────────────  ─────────────────────────────
 Auth, guest, reset, history      Письма не доходят на проде:            Подзадачи в попапе расширения
 Tasks / subtasks / sessions        Resend шлёт с onboarding@resend.dev  Дневная цель с прогресс-баром
-Whitelist + блокировка             → задать YANDEX_SMTP_* на Railway
+Whitelist / blacklist + блокировка → задать YANDEX_SMTP_* на Railway
 Stats, streak, focus score         или подтвердить домен в Resend
 AI insights (код)                ANTHROPIC_API_KEY не задан на Railway
 Routines + ссылка в sidebar      LEMONSQUEEZY_* не заданы на Railway
@@ -156,6 +168,8 @@ Routines + ссылка в sidebar      LEMONSQUEEZY_* не заданы на Ra
 Billing (код)
 Деплой на Railway (3 сервиса)
 resend-verification по email
+Тесты backend + GitHub Actions CI
+«Что отвлекает» (дашборд, письмо)
 Экран /verify-email (вместо 403)
 ```
 
@@ -164,7 +178,7 @@ resend-verification по email
 - **Auth:** JWT, email verification, rate limiting (slowapi), guest mode (`POST /auth/guest`, `is_guest=True`), forgot/reset/change password, запрет последних 5 паролей (`PasswordHistory`, `UoW.password_history`).
 - **Задачи:** CRUD, архив (`is_active`), подзадачи с позициями и mini-progress (`subtask_count`, `completed_count` через LEFT JOIN), `GET /tasks/{id}/insights`.
 - **Сессии:** `GET /sessions/active` — все активные сессии одним запросом; WhitelistEntry с IDNA-кодированием; BlockedEvent.
-- **Stats:** `GET /stats/streak`, `GET /stats/daily?days=30`, `GET /stats/focus-score-history`.
+- **Stats:** `GET /stats/streak`, `GET /stats/daily?days=30`, `GET /stats/focus-score-history`, `GET /stats/distractions?days=30&tz_offset_minutes=180` (топ доменов, попытки по часам в поясе юзера, медиана `session_minute`; считается из `BlockedEvent`). Тот же расчёт идёт в недельное письмо (пояс из `Routine.timezone_offset`) и в промпт AI-инсайтов задачи.
 - **Frontend страницы:** `/verify-email` (неподтверждённый юзер; `RequireAuth` проверяет `is_verified` через `/auth/me` раз на токен), `/tasks`, `/dashboard`, `/profile`, `/forgot-password`, `/reset-password`, `/routines`, `/tasks/:id/sessions`, `/sessions/:id/stats`, `/tasks/:id/insights`; `AppLayout` — sidebar.
 - **LiveTimer:** тикает локально через `setInterval`, без polling.
 - **Расширение:** помодоро (focus/break/long break, SVG кольцо, notifications), звуки (Web Audio, `sounds.js`), RU/EN (своя MESSAGES система, `chrome.storage.local` key `extLang`), тёмная blocked.html со счётчиком.
@@ -181,7 +195,8 @@ resend-verification по email
 | `b7c4d2e1f8a9` | add is_guest |
 | `c9e3f1a2b5d7` | add password_reset_token + password_reset_expires_at |
 | `6c60ed2bee3b` | add password_history table |
-| `d1e2f3a4b5c6` | add routines (**HEAD**) |
+| `d1e2f3a4b5c6` | add routines |
+| `e5f6a7b8c9d0` | add tasks.block_mode (**HEAD**) |
 
 ## Ключевые паттерны
 

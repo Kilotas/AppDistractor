@@ -84,11 +84,14 @@ export interface User {
   created_at: string;
 }
 
+export type BlockMode = "whitelist" | "blacklist";
+
 export interface Task {
   id: number;
   title: string;
   description: string | null;
   is_active: boolean;
+  block_mode: BlockMode;
   created_at: string;
   updated_at: string;
   subtask_count: number;
@@ -167,6 +170,16 @@ export interface FocusScorePoint {
   ended_at: string;
 }
 
+export interface DistractionStats {
+  days: number;
+  total_attempts: number;
+  top_domains: { domain: string; count: number }[];
+  /** 24 значения — попытки по часу суток в часовом поясе браузера */
+  by_hour: number[];
+  peak_hour: number | null;
+  typical_session_minute: number | null;
+}
+
 export type RoutineType = "morning_brief" | "end_of_day" | "weekly_summary";
 
 export interface Routine {
@@ -222,6 +235,8 @@ export const api = {
     delete: (id: number) => request<null>("DELETE", `/tasks/${id}`),
     setActive: (id: number, is_active: boolean) =>
       request<Task>("PATCH", `/tasks/${id}`, { is_active }),
+    setBlockMode: (id: number, block_mode: BlockMode) =>
+      request<Task>("PATCH", `/tasks/${id}`, { block_mode }),
   },
 
   whitelist: {
@@ -245,6 +260,12 @@ export const api = {
     daily: (days = 30) => request<DailyStats>("GET", `/stats/daily?days=${days}`),
     tasks: () => request<{ tasks: TaskFocusStat[] }>("GET", "/stats/tasks"),
     focusScore: () => request<{ points: FocusScorePoint[] }>("GET", "/stats/focus-score"),
+    // getTimezoneOffset() считает UTC минус местное время, а бэкенд ждёт наоборот (Москва = 180)
+    distractions: (days = 30) =>
+      request<DistractionStats>(
+        "GET",
+        `/stats/distractions?days=${days}&tz_offset_minutes=${-new Date().getTimezoneOffset()}`,
+      ),
   },
 
   activeSessions: {

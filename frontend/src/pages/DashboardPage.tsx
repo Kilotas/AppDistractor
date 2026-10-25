@@ -4,7 +4,7 @@ import {
   Cell, CartesianGrid, LineChart, Line, ReferenceLine,
 } from "recharts";
 import { api } from "../api/client";
-import type { DailyActivity, TaskFocusStat, FocusScorePoint } from "../api/client";
+import type { DailyActivity, TaskFocusStat, FocusScorePoint, DistractionStats } from "../api/client";
 import { useT } from "../i18n";
 import AppLayout from "../components/AppLayout";
 import styles from "./DashboardPage.module.css";
@@ -15,14 +15,16 @@ export default function DashboardPage() {
   const [daily, setDaily] = useState<DailyActivity[]>([]);
   const [topTasks, setTopTasks] = useState<TaskFocusStat[]>([]);
   const [focusHistory, setFocusHistory] = useState<FocusScorePoint[]>([]);
+  const [distractions, setDistractions] = useState<DistractionStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.stats.daily(30), api.stats.tasks(), api.stats.focusScore()])
-      .then(([d, tt, fs]) => {
+    Promise.all([api.stats.daily(30), api.stats.tasks(), api.stats.focusScore(), api.stats.distractions(30)])
+      .then(([d, tt, fs, ds]) => {
         setDaily(d.days);
         setTopTasks(tt.tasks);
         setFocusHistory(fs.points);
+        setDistractions(ds);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -38,6 +40,10 @@ export default function DashboardPage() {
   }));
 
   const hasData = totalMinutes > 0;
+
+  const hourLabel = (h: number) => `${String(h % 24).padStart(2, "0")}:00`;
+  const hourData = (distractions?.by_hour ?? []).map((count, hour) => ({ hour, count }));
+  const peakHour = distractions?.peak_hour ?? null;
 
   if (loading) return <AppLayout><div className={styles.center}>{t("loading")}</div></AppLayout>;
 
@@ -158,6 +164,90 @@ export default function DashboardPage() {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Что отвлекает */}
+          {distractions && (
+            <div className={styles.card}>
+              <div className={styles.cardTitle}>{t("distractTitle")}</div>
+              {distractions.total_attempts === 0 ? (
+                <div className={styles.distractNone}>{t("distractNone")}</div>
+              ) : (
+                <>
+                  <div className={styles.distractSummary}>
+                    <div className={styles.distractCount}>
+                      <span className={styles.distractCountValue}>{distractions.total_attempts}</span>
+                      <span className={styles.summaryLabel}>{t("distractAttempts")}</span>
+                    </div>
+                    <div className={styles.distractFacts}>
+                      {peakHour !== null && (
+                        <div>
+                          {t("distractPeak")
+                            .replace("{from}", hourLabel(peakHour))
+                            .replace("{to}", hourLabel(peakHour + 1))}
+                        </div>
+                      )}
+                      {distractions.typical_session_minute !== null && (
+                        <div>{t("distractMinute").replace("{n}", String(distractions.typical_session_minute))}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.distractGrid}>
+                    <div>
+                      <div className={styles.distractSubtitle}>{t("distractTopSites")}</div>
+                      <div className={styles.taskBars}>
+                        {distractions.top_domains.map((d) => {
+                          const pct = (d.count / distractions.top_domains[0].count) * 100;
+                          return (
+                            <div key={d.domain} className={styles.taskBarRow}>
+                              <div className={styles.taskBarLabel} title={d.domain}>{d.domain}</div>
+                              <div className={styles.taskBarTrack}>
+                                <div className={styles.distractBarFill} style={{ width: `${pct}%` }} />
+                              </div>
+                              <div className={styles.taskBarValue}>{d.count}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className={styles.distractSubtitle}>{t("distractByHour")}</div>
+                      <ResponsiveContainer width="100%" height={140}>
+                        <BarChart data={hourData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                          <XAxis
+                            dataKey="hour"
+                            tick={{ fill: "var(--text-2)", fontSize: 11 }}
+                            ticks={[0, 6, 12, 18]}
+                            tickFormatter={hourLabel}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis allowDecimals={false} tick={{ fill: "var(--text-2)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                          <Tooltip
+                            contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
+                            labelStyle={{ color: "var(--text)" }}
+                            labelFormatter={(h) => `${hourLabel(Number(h))}–${hourLabel(Number(h) + 1)}`}
+                            formatter={(v) => [String(v), ""]}
+                          />
+                          <Bar dataKey="count" radius={[3, 3, 0, 0]}>
+                            {hourData.map((entry) => (
+                              <Cell
+                                key={entry.hour}
+                                fill={entry.hour === peakHour ? "var(--warning)" : "var(--text-2)"}
+                                fillOpacity={entry.hour === peakHour ? 0.9 : 0.35}
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </>

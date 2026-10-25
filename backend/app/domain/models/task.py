@@ -13,6 +13,10 @@ class Task(Base, TimestampMixin):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # "whitelist" — блокировать всё, кроме списка доменов; "blacklist" — блокировать только список
+    block_mode: Mapped[str] = mapped_column(
+        String(16), default="whitelist", server_default="whitelist", nullable=False
+    )
 
     user: Mapped["User"] = relationship(back_populates="tasks")  # noqa: F821
 

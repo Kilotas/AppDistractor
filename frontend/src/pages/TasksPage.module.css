@@ -355,6 +355,22 @@
   gap: 10px;
 }
 
+.modeToggle { display: flex; gap: 4px; background: var(--surface-2); border-radius: 8px; padding: 3px; align-self: flex-start; }
+
+.modeBtn,
+.modeBtnActive {
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-2);
+}
+
+.modeBtn:hover { color: var(--text); }
+.modeBtnActive { background: var(--accent-dim); color: var(--accent-text); font-weight: 600; }
+
 .whitelistTitle { font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; }
 .whitelistEmpty { font-size: 13px; color: var(--text-muted); }
 
