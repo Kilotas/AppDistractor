@@ -34,11 +34,16 @@ class SessionService:
             logger.info("Session started: id=%d task_id=%d", session.id, data.task_id)
             return session
 
-    async def stop(self, session_id: int) -> Session:
+    async def _get_owned(self, user_id: int, session_id: int) -> Session:
+        """Сессия текущего пользователя. Чужую не отличаем от несуществующей — 404."""
+        session = await self._uow.sessions.get_by_id(session_id)
+        if session is None or await self._uow.tasks.get_by_id_for_user(session.task_id, user_id) is None:
+            raise NotFoundError("Session", session_id)
+        return session
+
+    async def stop(self, user_id: int, session_id: int) -> Session:
         async with self._uow:
-            session = await self._uow.sessions.get_by_id(session_id)
-            if session is None:
-                raise NotFoundError("Session", session_id)
+            session = await self._get_owned(user_id, session_id)
             if session.status != SessionStatus.ACTIVE:
                 logger.warning("Session stop conflict: session_id=%d status=%s", session_id, session.status)
                 raise ConflictError(f"Session {session_id} is not active")
@@ -56,12 +61,9 @@ class SessionService:
             )
             return session
 
-    async def get(self, session_id: int) -> Session:
+    async def get(self, user_id: int, session_id: int) -> Session:
         async with self._uow:
-            session = await self._uow.sessions.get_by_id(session_id)
-            if session is None:
-                raise NotFoundError("Session", session_id)
-            return session
+            return await self._get_owned(user_id, session_id)
 
     async def list_for_task(self, task_id: int) -> list[Session]:
         async with self._uow:

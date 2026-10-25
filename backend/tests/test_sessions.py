@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import pytest
 
 from app.domain.models import Session
@@ -97,13 +99,58 @@ def test_focus_score(blocked_attempts, score):
     assert SessionService._calc_focus_score(Session(blocked_attempts=blocked_attempts)) == score
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="POST /sessions/{id}/stop не проверяет владельца сессии: любой пользователь может остановить чужую",
-)
+# ── Чужие сессии: всё отвечает 404, как несуществующее ───
+
+async def log_event(client, headers, session_id, domain="youtube.com"):
+    return await client.post(
+        "/api/v1/events/",
+        json={
+            "session_id": session_id,
+            "url": f"https://{domain}/",
+            "domain": domain,
+            "attempted_at": datetime.now(timezone.utc).isoformat(),
+            "session_minute": 0,
+        },
+        headers=headers,
+    )
+
+
 async def test_cannot_stop_someone_elses_session(client, user, other_user, task_id):
     session_id = (await start(client, user, task_id)).json()["id"]
 
     resp = await stop(client, other_user, session_id)
 
     assert resp.status_code == 404
+    own = await client.get(f"/api/v1/sessions/{session_id}", headers=user)
+    assert own.json()["status"] == "active"
+
+
+async def test_cannot_view_someone_elses_session(client, user, other_user, task_id):
+    session_id = (await start(client, user, task_id)).json()["id"]
+
+    assert (await client.get(f"/api/v1/sessions/{session_id}", headers=other_user)).status_code == 404
+    assert (await client.get(f"/api/v1/sessions/{session_id}/events", headers=other_user)).status_code == 404
+    assert (await client.get(f"/api/v1/sessions/{session_id}/stats", headers=other_user)).status_code == 404
+
+
+async def test_cannot_log_event_into_someone_elses_session(client, user, other_user, task_id):
+    session_id = (await start(client, user, task_id)).json()["id"]
+
+    resp = await log_event(client, other_user, session_id)
+
+    assert resp.status_code == 404
+    events = await client.get(f"/api/v1/sessions/{session_id}/events", headers=user)
+    assert events.json() == []
+
+
+async def test_own_events_and_stats(client, user, task_id):
+    session_id = (await start(client, user, task_id)).json()["id"]
+
+    assert (await log_event(client, user, session_id, "youtube.com")).status_code == 201
+    assert (await log_event(client, user, session_id, "youtube.com")).status_code == 201
+    assert (await log_event(client, user, session_id, "vk.com")).status_code == 201
+
+    events = await client.get(f"/api/v1/sessions/{session_id}/events", headers=user)
+    assert sorted(e["domain"] for e in events.json()) == ["vk.com", "youtube.com", "youtube.com"]
+    stats = (await client.get(f"/api/v1/sessions/{session_id}/stats", headers=user)).json()
+    assert stats["total_blocked"] == 3
