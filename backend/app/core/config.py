@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "change-me-in-production"
     JWT_EXPIRE_DAYS: int = 30
     RESEND_API_KEY: str = ""
+    # Отправитель для Resend; домен должен быть подтверждён в Resend
+    EMAIL_FROM: str = "FocusVoid <onboarding@resend.dev>"
     YANDEX_SMTP_USER: str = ""
     YANDEX_SMTP_PASSWORD: str = ""
     YANDEX_SMTP_FROM: str = ""
