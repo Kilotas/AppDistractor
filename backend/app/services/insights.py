@@ -1,5 +1,6 @@
 import json
 import logging
+import statistics
 
 import anthropic
 
@@ -38,13 +39,19 @@ class InsightService:
                     recommendations=["Запусти первую сессию через расширение и вернись сюда."],
                 )
 
+            top_domains = await self._uow.blocked_events.get_top_domains_for_task(task_id, limit=5)
+            minutes = await self._uow.blocked_events.get_session_minutes_for_task(task_id)
+            typical_minute = statistics.median_low(minutes) if minutes else None
+
             if settings.ANTHROPIC_API_KEY:
                 logger.info("Requesting Claude insights for task_id=%d sessions=%d avg_score=%s", task_id, len(completed), avg_score)
-                insights, recommendations = await self._claude_insights(task, completed, avg_score)
+                insights, recommendations = await self._claude_insights(
+                    task, completed, avg_score, top_domains, typical_minute
+                )
                 logger.info("Claude insights received for task_id=%d", task_id)
             else:
                 logger.debug("No ANTHROPIC_API_KEY — using stub insights for task_id=%d", task_id)
-                insights, recommendations = self._stub_insights(completed, avg_score)
+                insights, recommendations = self._stub_insights(completed, avg_score, top_domains, typical_minute)
 
             return TaskInsights(
                 task_id=task_id,
@@ -55,10 +62,23 @@ class InsightService:
             )
 
     @staticmethod
-    async def _claude_insights(task, completed, avg_score):
+    def _distraction_lines(top_domains, typical_minute) -> list[str]:
+        lines = []
+        if top_domains:
+            sites = ", ".join(f"{domain} ({count})" for domain, count in top_domains)
+            lines.append(f"Чаще всего отвлекали: {sites}.")
+        if typical_minute is not None:
+            lines.append(f"Обычно отвлечение случается на {typical_minute}-й минуте сессии.")
+        return lines
+
+    @staticmethod
+    async def _claude_insights(task, completed, avg_score, top_domains, typical_minute):
         total_blocked = sum(s.blocked_attempts for s in completed)
         best = max(completed, key=lambda s: s.focus_score)
         worst = min(completed, key=lambda s: s.focus_score)
+        distraction_facts = "\n".join(
+            f"- {line}" for line in InsightService._distraction_lines(top_domains, typical_minute)
+        )
 
         prompt = f"""Ты — ассистент по продуктивности. Проанализируй данные о фокус-сессиях пользователя и дай полезные инсайты.
 
@@ -71,6 +91,9 @@ class InsightService:
 - Всего попыток зайти на заблокированный сайт: {total_blocked}
 - Лучшая сессия: score {round(best.focus_score)}, {best.blocked_attempts} блокировок
 - Худшая сессия: score {round(worst.focus_score)}, {worst.blocked_attempts} блокировок
+{distraction_facts}
+
+Если известны отвлекающие сайты или минута срыва — опирайся на них в рекомендациях.
 
 Ответь строго в JSON формате (без markdown, только JSON):
 {{
@@ -92,7 +115,7 @@ class InsightService:
         return data["insights"], data["recommendations"]
 
     @staticmethod
-    def _stub_insights(completed, avg_score):
+    def _stub_insights(completed, avg_score, top_domains=(), typical_minute=None):
         total_blocked = sum(s.blocked_attempts for s in completed)
         best = max(completed, key=lambda s: s.focus_score)
         worst = min(completed, key=lambda s: s.focus_score)
@@ -103,6 +126,7 @@ class InsightService:
             f"Всего попыток зайти на заблокированный сайт: {total_blocked}.",
             f"Лучшая сессия — score {round(best.focus_score)}, {best.blocked_attempts} блокировок.",
             f"Сложнейшая сессия — score {round(worst.focus_score)}, {worst.blocked_attempts} блокировок.",
+            *InsightService._distraction_lines(top_domains, typical_minute),
         ]
         recommendations = [
             "Добавь ANTHROPIC_API_KEY в .env чтобы получить персональные рекомендации от AI.",

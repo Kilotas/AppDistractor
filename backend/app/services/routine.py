@@ -1,8 +1,10 @@
 import logging
 from datetime import datetime, timezone
+from html import escape
 
 from app.domain.models.routine import Routine, RoutineType
 from app.domain.models.user import User
+from app.domain.schemas.stats import DistractionStats
 from app.services.email import _send_via_yandex, _send_via_resend
 from app.core.config import settings
 from app.unit_of_work.protocol import UoWProtocol
@@ -72,7 +74,7 @@ class RoutineService:
             elif routine.type == RoutineType.END_OF_DAY:
                 await self._send_end_of_day(user)
             elif routine.type == RoutineType.WEEKLY_SUMMARY:
-                await self._send_weekly_summary(user)
+                await self._send_weekly_summary(user, routine.timezone_offset)
         except Exception:
             logger.exception("Failed to send routine %s to user %d", routine.type, user.id)
 
@@ -105,18 +107,21 @@ class RoutineService:
         await _send_email(user.email, "Итоги дня — FocusVoid", html)
         logger.info("End of day digest sent to user %d", user.id)
 
-    async def _send_weekly_summary(self, user: User) -> None:
+    async def _send_weekly_summary(self, user: User, timezone_offset: int = 0) -> None:
         from app.services.stats import StatsService
 
         stats_svc = StatsService(self._uow)
         daily = await stats_svc.get_daily(user.id, days=7)
         top_tasks = await stats_svc.get_top_tasks(user.id, limit=3)
         streak = await stats_svc.get_streak(user.id)
+        distractions = await stats_svc.get_distractions(
+            user.id, days=7, tz_offset_minutes=timezone_offset * 60, top=3
+        )
 
         total_minutes = sum(d.focus_minutes for d in daily.days)
         active_days = sum(1 for d in daily.days if d.focus_minutes > 0)
 
-        html = _build_weekly_html(total_minutes, active_days, streak.current_streak, top_tasks.tasks)
+        html = _build_weekly_html(total_minutes, active_days, streak.current_streak, top_tasks.tasks, distractions)
         await _send_email(user.email, "Итоги недели — FocusVoid", html)
         logger.info("Weekly summary sent to user %d", user.id)
 
@@ -185,7 +190,39 @@ def _build_eod_html(focus_minutes: int, sessions_count: int, streak: int) -> str
     """
 
 
-def _build_weekly_html(total_minutes: int, active_days: int, streak: int, top_tasks: list) -> str:
+def _build_distractions_html(distractions: DistractionStats | None) -> str:
+    if distractions is None:
+        return ""
+    if distractions.total_attempts == 0:
+        return '<p style="color:#8892a4;margin-bottom:20px;">За неделю ни одной попытки отвлечься 💪</p>'
+
+    rows = "".join(
+        f"""<tr>
+            <td style="color:#e2e8f0;padding:6px 0;border-bottom:1px solid #1e2a40;">{escape(d.domain)}</td>
+            <td style="color:#f59e0b;text-align:right;padding:6px 0;border-bottom:1px solid #1e2a40;">{d.count}</td>
+        </tr>"""
+        for d in distractions.top_domains
+    )
+    peak = distractions.peak_hour
+    peak_text = (
+        f'<p style="color:#8892a4;margin:8px 0 0;font-size:13px;">Чаще всего — с {peak:02d}:00 до {(peak + 1) % 24:02d}:00</p>'
+        if peak is not None else ""
+    )
+    return f"""
+        <p style="color:#e2e8f0;font-weight:600;margin-bottom:8px;">Что отвлекало ({distractions.total_attempts}):</p>
+        <table style="width:100%;border-collapse:collapse;">{rows}</table>
+        {peak_text}
+        <div style="height:20px;"></div>
+    """
+
+
+def _build_weekly_html(
+    total_minutes: int,
+    active_days: int,
+    streak: int,
+    top_tasks: list,
+    distractions: DistractionStats | None = None,
+) -> str:
     hours = total_minutes // 60
     mins = total_minutes % 60
     focus_text = f"{hours}ч {mins}мин" if hours else f"{mins} мин"
@@ -215,6 +252,7 @@ def _build_weekly_html(total_minutes: int, active_days: int, streak: int, top_ta
         </div>
         <p style="color:#e2e8f0;font-weight:600;margin-bottom:8px;">Топ задачи:</p>
         <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">{task_rows}</table>
+        {_build_distractions_html(distractions)}
         <p style="color:#e2e8f0;margin-bottom:24px;">{streak_text}</p>
         <a href="{settings.APP_URL}" style="display:inline-block;padding:12px 24px;background:#4f7df9;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Открыть приложение</a>
     </div>
