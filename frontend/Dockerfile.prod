@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-ARG VITE_API_URL=https://backend-production-506f.up.railway.app/api/v1
+ARG VITE_API_URL=https://api.focusvoid.com/api/v1
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 

@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 from app.core.config import settings
 from app.domain.models.user import User
 from app.domain.schemas.user import UserRegister, TokenResponse
-from app.exceptions import ConflictError, NotFoundError, AuthError
+from app.exceptions import AuthError, ConflictError, ForbiddenError, NotFoundError
 from app.services.email import send_reset_email, send_verification_email, send_password_changed_email
 from app.unit_of_work.protocol import UoWProtocol
 
@@ -24,7 +24,11 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return pwd_context.verify(plain, hashed)
+    except ValueError:
+        # Старые гостевые аккаунты хранят не bcrypt-хэш, а случайный hex
+        return False
 
 
 def create_access_token(user_id: int) -> str:
@@ -111,7 +115,7 @@ class AuthService:
             guest_id = uuid.uuid4().hex[:12]
             user = User(
                 email=f"guest_{guest_id}@focusvoid.guest",
-                hashed_password=secrets.token_hex(32),
+                hashed_password=hash_password(secrets.token_hex(32)),
                 is_verified=True,
                 is_guest=True,
             )
@@ -181,6 +185,21 @@ class AuthService:
             logger.info("Password changed for user id=%d", user.id)
 
         await send_password_changed_email(user.email)
+
+    async def delete_account(self, user_id: int, password: str | None) -> None:
+        async with self._uow:
+            user = await self._uow.users.get_by_id(user_id)
+            if user is None:
+                raise NotFoundError("User", user_id)
+
+            # 403, а не 401: на 401 фронт разлогинивает, а тут просто опечатка в пароле
+            if not user.is_guest and not (password and verify_password(password, user.hashed_password)):
+                raise ForbiddenError("Неверный пароль")
+
+            is_guest = user.is_guest
+            await self._uow.users.delete_with_data(user_id)
+            await self._uow.commit()
+            logger.info("Account deleted: user id=%d guest=%s", user_id, is_guest)
 
     async def get_user(self, user_id: int) -> User:
         async with self._uow:

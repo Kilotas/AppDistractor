@@ -1,4 +1,6 @@
-const DEFAULT_URL = "http://localhost:8000/api/v1";
+// Прод по умолчанию; для локальной разработки:
+// chrome.storage.local.set({ apiBaseUrl: "http://localhost:8000/api/v1" })
+const DEFAULT_URL = "https://api.focusvoid.com/api/v1";
 
 async function getBaseUrl() {
   const { apiBaseUrl } = await chrome.storage.local.get("apiBaseUrl");

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 
 from app.api.deps import get_auth_service, get_current_user
 from app.domain.models.user import User
 from app.domain.schemas.user import (
     ChangePasswordRequest,
+    DeleteAccountRequest,
     ForgotPasswordRequest,
     ResendVerificationRequest,
     ResetPasswordRequest,
@@ -105,3 +106,14 @@ async def change_password(
 ):
     await service.change_password(current_user.id, data.current_password, data.new_password)
     return {"detail": "Пароль успешно изменён"}
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("5/minute")
+async def delete_account(
+    request: Request,
+    data: DeleteAccountRequest,
+    current_user: User = Depends(get_current_user),
+    service: AuthService = Depends(get_auth_service),
+):
+    await service.delete_account(current_user.id, data.password)

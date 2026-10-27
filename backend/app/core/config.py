@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 import json
 
 
@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     )
 
     APP_ENV: str = "development"
-    APP_DEBUG: bool = True
+    APP_DEBUG: bool = False
     DATABASE_URL: str = "sqlite+aiosqlite:///./focus.db"
     CORS_ORIGINS: list[str] = ["http://localhost:5173"]
     JWT_SECRET: str = "change-me-in-production"
@@ -31,6 +31,15 @@ class Settings(BaseSettings):
     LEMONSQUEEZY_STORE_ID: str = ""
     LEMONSQUEEZY_VARIANT_ID: str = ""
     LEMONSQUEEZY_WEBHOOK_SECRET: str = ""
+
+    @model_validator(mode="after")
+    def check_production_secrets(self) -> "Settings":
+        # С дефолтным JWT_SECRET любой подпишет токен на чужой user_id
+        if self.APP_ENV == "production" and (
+            self.JWT_SECRET == "change-me-in-production" or len(self.JWT_SECRET) < 32
+        ):
+            raise ValueError("JWT_SECRET must be set to a random value of 32+ chars in production")
+        return self
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
