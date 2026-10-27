@@ -26,7 +26,6 @@ async def fill_with_data(client, headers) -> int:
         headers=headers,
     )
     assert event.status_code == 201, event.text
-    await client.get("/api/v1/routines", headers=headers)  # рутины создаются при первом GET
     assert (await client.patch("/api/v1/routines/morning_brief", json={"enabled": True}, headers=headers)).status_code == 200
     return task_id
 

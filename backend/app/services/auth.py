@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 from app.core.config import settings
 from app.domain.models.user import User
 from app.domain.schemas.user import UserRegister, TokenResponse
-from app.exceptions import AuthError, ConflictError, ForbiddenError, NotFoundError
+from app.exceptions import AuthError, BadRequestError, ConflictError, ForbiddenError, NotFoundError
 from app.services.email import send_reset_email, send_verification_email, send_password_changed_email
 from app.unit_of_work.protocol import UoWProtocol
 
@@ -153,7 +153,7 @@ class AuthService:
             history = await self._uow.password_history.get_last_n(user.id, 5)
             for entry in history:
                 if verify_password(new_password, entry.hashed_password):
-                    raise AuthError("Этот пароль уже использовался. Придумайте новый.")
+                    raise BadRequestError("Этот пароль уже использовался. Придумайте новый.")
 
             new_hashed = hash_password(new_password)
             await self._uow.password_history.add_for_user(user.id, new_hashed)
@@ -171,12 +171,13 @@ class AuthService:
                 raise NotFoundError("User", user_id)
 
             if not verify_password(current_password, user.hashed_password):
-                raise AuthError("Неверный текущий пароль")
+                # 403, а не 401: на 401 фронт разлогинивает
+                raise ForbiddenError("Неверный текущий пароль")
 
             history = await self._uow.password_history.get_last_n(user.id, 5)
             for entry in history:
                 if verify_password(new_password, entry.hashed_password):
-                    raise AuthError("Этот пароль уже использовался. Придумайте новый.")
+                    raise BadRequestError("Этот пароль уже использовался. Придумайте новый.")
 
             new_hashed = hash_password(new_password)
             await self._uow.password_history.add_for_user(user.id, new_hashed)

@@ -6,6 +6,10 @@ class AppError(Exception):
         self.detail = detail
 
 
+class BadRequestError(AppError):
+    status_code = 400
+
+
 class NotFoundError(AppError):
     status_code = 404
 
