@@ -149,6 +149,10 @@ const translations = {
     profileConfirmPwd: "Подтвердите пароль",
     profileSavePwd: "Сохранить",
     profilePwdSuccess: "Пароль успешно изменён",
+    profileDeleteTitle: "Удалить аккаунт",
+    profileDeleteDesc: "Аккаунт и все данные — задачи, сессии, статистика, рассылки — будут удалены навсегда. Отменить это нельзя.",
+    profileDeletePwd: "Введите пароль для подтверждения",
+    profileDeleteConfirm: "Удалить навсегда",
 
     // InsightsPage
     analyzing: "Анализирую...",
@@ -304,6 +308,10 @@ const translations = {
     profileConfirmPwd: "Confirm password",
     profileSavePwd: "Save",
     profilePwdSuccess: "Password changed successfully",
+    profileDeleteTitle: "Delete account",
+    profileDeleteDesc: "Your account and all data — tasks, sessions, statistics, digests — will be deleted permanently. This cannot be undone.",
+    profileDeletePwd: "Enter your password to confirm",
+    profileDeleteConfirm: "Delete permanently",
 
     // InsightsPage
     analyzing: "Analyzing...",

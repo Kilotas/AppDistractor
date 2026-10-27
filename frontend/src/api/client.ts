@@ -78,6 +78,7 @@ export interface User {
   id: number;
   email: string;
   plan: "free" | "pro";
+  is_guest: boolean;
   trial_ends_at: string | null;
   created_at: string;
 }
@@ -212,6 +213,8 @@ export const api = {
     resendVerification: (email: string) =>
       request<{ detail: string }>("POST", "/auth/resend-verification", { email }, false),
     me: () => request<User>("GET", "/auth/me"),
+    deleteAccount: (password: string | null) =>
+      request<null>("DELETE", "/auth/me", { password }),
     guest: () =>
       request<{ access_token: string; token_type: string }>("POST", "/auth/guest", undefined, false),
     forgotPassword: (email: string) =>

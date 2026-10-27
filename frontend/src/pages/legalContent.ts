@@ -16,7 +16,7 @@ export interface LegalDoc {
   sections: LegalSection[];
 }
 
-export const LEGAL_UPDATED = "2026-10-24";
+export const LEGAL_UPDATED = "2026-10-27";
 
 // Пока нет своего домена (этап 1) — связь через GitHub Issues.
 // TODO(feat/custom-domain): заменить на support@<домен>.
@@ -73,7 +73,7 @@ export const legalDocs: Record<LegalKind, Record<Lang, LegalDoc>> = {
         {
           heading: "6. Хранение и удаление",
           paragraphs: [
-            "Данные хранятся, пока существует ваш аккаунт. Чтобы удалить аккаунт и все связанные данные, напишите нам (раздел «Контакты») — мы удалим их в течение 30 дней.",
+            "Данные хранятся, пока существует ваш аккаунт. Удалить аккаунт и все связанные данные можно в любой момент в профиле (кнопка «Удалить аккаунт») — удаление происходит сразу и безвозвратно. Если доступа к аккаунту нет, напишите нам (раздел «Контакты») — мы удалим данные в течение 30 дней.",
             "Локальные данные расширения удаляются вместе с расширением или при выходе из аккаунта в нём.",
           ],
         },
@@ -144,7 +144,7 @@ export const legalDocs: Record<LegalKind, Record<Lang, LegalDoc>> = {
         {
           heading: "6. Retention and deletion",
           paragraphs: [
-            "We keep your data while your account exists. To delete your account and all related data, contact us (see \"Contact\") — we will delete it within 30 days.",
+            "We keep your data while your account exists. You can delete your account and all related data at any time in your profile (the \"Delete account\" button) — deletion is immediate and permanent. If you cannot access your account, contact us (see \"Contact\") and we will delete your data within 30 days.",
             "The extension's local data is removed when you uninstall the extension or sign out in it.",
           ],
         },
