@@ -38,6 +38,7 @@ class UserResponse(BaseModel):
     plan: UserPlan
     trial_ends_at: datetime | None
     is_guest: bool
+    is_verified: bool
     created_at: datetime
 
 

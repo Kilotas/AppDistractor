@@ -80,6 +80,7 @@ export interface User {
   plan: "free" | "pro";
   is_guest: boolean;
   trial_ends_at: string | null;
+  is_verified: boolean;
   created_at: string;
 }
 
