@@ -47,7 +47,7 @@ export const legalDocs: Record<LegalKind, Record<Lang, LegalDoc>> = {
           heading: "3. Расширение для Chrome",
           paragraphs: [
             "Расширение хранит локально (chrome.storage) токен входа, данные текущей сессии, белый список и настройки (язык, звук).",
-            "Разрешения «tabs» и доступ ко всем сайтам нужны, чтобы блокировать сайты вне белого списка и распознать переход на страницу блокировки. Расширение не читает содержимое страниц, историю браузера, пароли или формы.",
+            "Доступ к сайтам (http/https) нужен, чтобы блокировать любой сайт, который вы выбрали, и перенаправлять его на страницу блокировки. Расширение не читает содержимое страниц, историю браузера, пароли или формы.",
             "На сервер отправляется только URL страницы, которую расширение заблокировало во время активной фокус-сессии. Вне сессии сведения о посещаемых сайтах не передаются.",
             "Использование данных, полученных расширением, соответствует Политике в отношении пользовательских данных Chrome Web Store, включая требования об ограниченном использовании (Limited Use).",
           ],
@@ -118,7 +118,7 @@ export const legalDocs: Record<LegalKind, Record<Lang, LegalDoc>> = {
           heading: "3. Chrome extension",
           paragraphs: [
             "The extension stores locally (chrome.storage) your sign-in token, the current session, the whitelist and settings (language, sound).",
-            "The \"tabs\" permission and access to all sites are needed to block sites outside your whitelist and to detect navigation to the block page. The extension does not read page content, browsing history, passwords or forms.",
+            "Access to sites (http/https) is needed to block any site you choose and redirect it to the block page. The extension does not read page content, browsing history, passwords or forms.",
             "Only the URL of a page the extension blocked during an active focus session is sent to our server. Outside a session, no information about the sites you visit is transmitted.",
             "The use of information received from the extension adheres to the Chrome Web Store User Data Policy, including the Limited Use requirements.",
           ],
