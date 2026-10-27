@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 
 from app.api.deps import get_verified_user, get_insight_service, get_task_service
 from app.domain.models.user import User
 from app.domain.schemas.insights import TaskInsights
 from app.domain.schemas.task import TaskCreate, TaskResponse, TaskUpdate
 from app.exceptions import PaymentRequiredError
+from app.main import limiter
 from app.services.billing import user_has_access
 from app.services.insights import InsightService
 from app.services.task import TaskService
@@ -66,7 +67,9 @@ async def delete_task(
 
 
 @router.get("/{task_id}/insights", response_model=TaskInsights)
+@limiter.limit("10/hour")  # каждый запрос — платный вызов Claude
 async def get_task_insights(
+    request: Request,
     task_id: int,
     current_user: User = Depends(get_verified_user),
     service: InsightService = Depends(get_insight_service),
