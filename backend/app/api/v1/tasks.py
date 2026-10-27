@@ -73,4 +73,4 @@ async def get_task_insights(
 ):
     if not user_has_access(current_user):
         raise PaymentRequiredError("Для AI-инсайтов нужна подписка Pro или активный триал")
-    return await service.get_for_task(task_id)
+    return await service.get_for_task(current_user.id, task_id)
