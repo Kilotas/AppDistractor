@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 ALGORITHM = "HS256"
+VERIFICATION_TTL = timedelta(hours=48)
 
 
 def hash_password(password: str) -> str:
@@ -31,15 +32,18 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 
-def create_access_token(user_id: int) -> str:
+def create_access_token(user: User) -> str:
     expire = datetime.now(timezone.utc) + timedelta(days=settings.JWT_EXPIRE_DAYS)
-    return jwt.encode({"sub": str(user_id), "exp": expire}, settings.JWT_SECRET, algorithm=ALGORITHM)
+    return jwt.encode(
+        {"sub": str(user.id), "ver": user.token_version, "exp": expire}, settings.JWT_SECRET, algorithm=ALGORITHM
+    )
 
 
-def decode_access_token(token: str) -> int:
+def decode_access_token(token: str) -> tuple[int, int]:
+    """Возвращает (user_id, token_version); у токенов, выданных до появления ver, — 0."""
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[ALGORITHM])
-        return int(payload["sub"])
+        return int(payload["sub"]), int(payload.get("ver", 0))
     except Exception:
         raise AuthError("Невалидный токен")
 
@@ -63,6 +67,7 @@ class AuthService:
                 hashed_password=hash_password(data.password),
                 trial_ends_at=trial_ends_at,
                 verification_token=token,
+                verification_expires_at=datetime.now(timezone.utc) + VERIFICATION_TTL,
                 is_verified=False,
             )
             await self._uow.users.add(user)
@@ -71,7 +76,7 @@ class AuthService:
 
             await send_verification_email(email, token)
 
-            return TokenResponse(access_token=create_access_token(user.id))
+            return TokenResponse(access_token=create_access_token(user))
 
     async def login(self, email: str, password: str) -> TokenResponse:
         async with self._uow:
@@ -81,7 +86,7 @@ class AuthService:
                 raise AuthError("Неверный email или пароль")
 
             logger.info("User logged in: id=%d email=%s", user.id, user.email)
-            return TokenResponse(access_token=create_access_token(user.id))
+            return TokenResponse(access_token=create_access_token(user))
 
     async def verify_email(self, token: str) -> TokenResponse:
         async with self._uow:
@@ -89,12 +94,16 @@ class AuthService:
             if user is None:
                 logger.warning("Email verification failed: invalid token")
                 raise AuthError("Неверная или устаревшая ссылка подтверждения")
+            # NULL — ссылки, выданные до появления срока; их не ломаем
+            if user.verification_expires_at is not None and user.verification_expires_at < datetime.now(timezone.utc):
+                raise AuthError("Срок действия ссылки истёк. Запросите новую.")
 
             user.is_verified = True
             user.verification_token = None
+            user.verification_expires_at = None
             await self._uow.commit()
             logger.info("Email verified for user id=%d email=%s", user.id, user.email)
-            return TokenResponse(access_token=create_access_token(user.id))
+            return TokenResponse(access_token=create_access_token(user))
 
     async def resend_verification(self, email: str) -> None:
         async with self._uow:
@@ -105,6 +114,7 @@ class AuthService:
                 return
             token = secrets.token_urlsafe(32)
             user.verification_token = token
+            user.verification_expires_at = datetime.now(timezone.utc) + VERIFICATION_TTL
             await self._uow.commit()
             logger.info("Verification email resent to user id=%d email=%s", user.id, user.email)
 
@@ -122,7 +132,7 @@ class AuthService:
             await self._uow.users.add(user)
             await self._uow.commit()
             logger.info("Guest user created: id=%d email=%s", user.id, user.email)
-            return TokenResponse(access_token=create_access_token(user.id))
+            return TokenResponse(access_token=create_access_token(user))
 
     async def forgot_password(self, email: str) -> None:
         async with self._uow:
@@ -161,10 +171,12 @@ class AuthService:
             user.hashed_password = new_hashed
             user.password_reset_token = None
             user.password_reset_expires_at = None
+            user.token_version += 1
             await self._uow.commit()
             logger.info("Password reset successful for user id=%d", user.id)
 
-    async def change_password(self, user_id: int, current_password: str, new_password: str) -> None:
+    async def change_password(self, user_id: int, current_password: str, new_password: str) -> TokenResponse:
+        """Отзывает все прежние токены (другие устройства, расширение) и выдаёт новый для текущего."""
         async with self._uow:
             user = await self._uow.users.get_by_id(user_id)
             if user is None:
@@ -182,10 +194,12 @@ class AuthService:
             new_hashed = hash_password(new_password)
             await self._uow.password_history.add_for_user(user.id, new_hashed)
             user.hashed_password = new_hashed
+            user.token_version += 1
             await self._uow.commit()
             logger.info("Password changed for user id=%d", user.id)
 
         await send_password_changed_email(user.email)
+        return TokenResponse(access_token=create_access_token(user))
 
     async def delete_account(self, user_id: int, password: str | None) -> None:
         async with self._uow:
