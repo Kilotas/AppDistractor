@@ -12,6 +12,7 @@ import InsightsPage from "./pages/InsightsPage";
 import ProfilePage from "./pages/ProfilePage";
 import DashboardPage from "./pages/DashboardPage";
 import RoutinesPage from "./pages/RoutinesPage";
+import LegalPage from "./pages/LegalPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   if (!getToken()) return <Navigate to="/login" replace />;
@@ -27,6 +28,8 @@ export default function App() {
         <Route path="/verify" element={<VerifyPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/privacy" element={<LegalPage kind="privacy" />} />
+        <Route path="/terms" element={<LegalPage kind="terms" />} />
         <Route path="/" element={<Navigate to="/tasks" replace />} />
         <Route path="/tasks" element={<RequireAuth><TasksPage /></RequireAuth>} />
         <Route path="/tasks/:taskId/sessions" element={<RequireAuth><SessionsPage /></RequireAuth>} />

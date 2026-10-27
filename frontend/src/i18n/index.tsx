@@ -103,6 +103,13 @@ const translations = {
     dashboardNoData: "Нет данных — начни первую сессию",
     dashboardMinutes: "мин",
     dashboardFocusChart: "Фокус-скор по сессиям",
+    distractTitle: "Что отвлекает",
+    distractAttempts: "попыток за 30 дней",
+    distractPeak: "Чаще всего — с {from} до {to}",
+    distractMinute: "Обычно срываешься на {n}-й минуте сессии",
+    distractTopSites: "Сайты",
+    distractByHour: "По часам",
+    distractNone: "За 30 дней ни одной попытки отвлечься 💪",
 
     // SessionsPage
     backToTasks: "← Задачи",
@@ -251,6 +258,13 @@ const translations = {
     dashboardNoData: "No data yet — start your first session",
     dashboardMinutes: "min",
     dashboardFocusChart: "Focus score by session",
+    distractTitle: "What distracts you",
+    distractAttempts: "attempts in 30 days",
+    distractPeak: "Most often between {from} and {to}",
+    distractMinute: "You usually slip at minute {n} of a session",
+    distractTopSites: "Sites",
+    distractByHour: "By hour",
+    distractNone: "Not a single distraction attempt in 30 days 💪",
 
     // SessionsPage
     backToTasks: "← Tasks",

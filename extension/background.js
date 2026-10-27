@@ -1,9 +1,11 @@
-import { getTasks, getWhitelist, startSession, stopSession, logBlockedEvent } from "./api.js";
+import { getTasks, getTask, getWhitelist, startSession, stopSession, logBlockedEvent } from "./api.js";
 
 // ID правила блокировки "всего" — константа чтобы всегда знать какое правило удалять
 const BLOCK_ALL_RULE_ID = 1;
 // Правила whitelist начинаются с ID 100 (оставляем зазор)
 const WHITELIST_RULE_ID_START = 100;
+// Правила blacklist — с ID 1000, чтобы не пересекаться с whitelist
+const BLACKLIST_RULE_ID_START = 1000;
 
 // ── Установка / обновление extension ──────────────────
 chrome.runtime.onInstalled.addListener(() => {
@@ -30,8 +32,11 @@ async function handleMessage(message) {
 
     case "START_SESSION": {
       const session = await startSession(message.taskId);
-      const whitelist = await getWhitelist(message.taskId);
-      await enableBlocking(session, whitelist);
+      const [task, whitelist] = await Promise.all([
+        getTask(message.taskId),
+        getWhitelist(message.taskId),
+      ]);
+      await enableBlocking(session, whitelist, task.block_mode ?? "whitelist");
       return session;
     }
 
@@ -67,26 +72,44 @@ function toAsciiDomain(domain) {
   }
 }
 
-async function enableBlocking(session, whitelistEntries) {
+// Редирект на нашу страницу. regexSubstitution передаёт оригинальный URL
+// как ?url=... параметр — так blocked.html знает что пытался открыть пользователь.
+const REDIRECT_TO_BLOCKED = {
+  type: "redirect",
+  redirect: {
+    regexSubstitution: chrome.runtime.getURL("/blocked/blocked.html") + "?url=\\0",
+  },
+};
+
+// Blacklist: блокируем только перечисленные домены (поддомены тоже —
+// requestDomains их покрывает), всё остальное открывается свободно.
+function buildBlacklistRules(entries) {
+  return entries.map((entry, index) => ({
+    id: BLACKLIST_RULE_ID_START + index,
+    priority: 1,
+    action: REDIRECT_TO_BLOCKED,
+    condition: {
+      regexFilter: ".*",
+      requestDomains: [toAsciiDomain(entry.domain)],
+      resourceTypes: ["main_frame"],
+    },
+  }));
+}
+
+async function enableBlocking(session, entries, blockMode = "whitelist") {
   // Сохраняем сессию в storage — переживёт "сон" service worker'а
   await chrome.storage.local.set({
     session: { id: session.id, taskId: session.task_id },
-    whitelist: whitelistEntries.map((e) => e.domain),
+    whitelist: entries.map((e) => e.domain),
+    blockMode,
   });
 
-  const rulesToAdd = [
-    // Правило 1: блокировать всё и редиректить на нашу страницу.
-    // regexSubstitution передаёт оригинальный URL как ?url=... параметр —
-    // так blocked.html знает что именно пытался открыть пользователь.
+  const rulesToAdd = blockMode === "blacklist" ? buildBlacklistRules(entries) : [
+    // Правило 1: блокировать всё и редиректить на нашу страницу
     {
       id: BLOCK_ALL_RULE_ID,
       priority: 1,
-      action: {
-        type: "redirect",
-        redirect: {
-          regexSubstitution: chrome.runtime.getURL("/blocked/blocked.html") + "?url=\\0",
-        },
-      },
+      action: REDIRECT_TO_BLOCKED,
       condition: {
         regexFilter: ".*",
         resourceTypes: ["main_frame"],
@@ -94,7 +117,7 @@ async function enableBlocking(session, whitelistEntries) {
     },
 
     // Правила 2+: разрешить каждый домен из whitelist
-    ...whitelistEntries.map((entry, index) => ({
+    ...entries.map((entry, index) => ({
       id: WHITELIST_RULE_ID_START + index,
       priority: 2, // выше чем BLOCK_ALL → перебивает блокировку
       action: { type: "allow" },
@@ -115,7 +138,7 @@ async function enableBlocking(session, whitelistEntries) {
   });
 
   console.log(
-    `Blocking enabled. Session ${session.id}, whitelist: ${whitelistEntries.map((e) => e.domain).join(", ") || "empty"}`
+    `Blocking enabled. Session ${session.id}, ${blockMode}: ${entries.map((e) => e.domain).join(", ") || "empty"}`
   );
 }
 
@@ -128,7 +151,7 @@ async function disableBlocking() {
     addRules: [],
   });
 
-  await chrome.storage.local.remove(["session", "whitelist"]);
+  await chrome.storage.local.remove(["session", "whitelist", "blockMode"]);
 
   console.log("Blocking disabled");
 }

@@ -42,3 +42,13 @@ async def test_delete_entry(client, user, task_id):
 async def test_someone_elses_task_is_hidden(client, other_user, task_id):
     assert (await client.get(f"/api/v1/tasks/{task_id}/whitelist", headers=other_user)).status_code == 404
     assert (await add(client, other_user, task_id, "github.com")).status_code == 404
+
+
+async def test_someone_else_cannot_delete_entry(client, user, other_user, task_id):
+    entry_id = (await add(client, user, task_id, "github.com")).json()["id"]
+
+    resp = await client.delete(f"/api/v1/whitelist/{entry_id}", headers=other_user)
+
+    assert resp.status_code == 404
+    listed = await client.get(f"/api/v1/tasks/{task_id}/whitelist", headers=user)
+    assert [e["domain"] for e in listed.json()] == ["github.com"]

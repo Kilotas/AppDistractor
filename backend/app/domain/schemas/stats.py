@@ -46,3 +46,19 @@ class FocusScorePoint(BaseModel):
 
 class FocusScoreHistory(BaseModel):
     points: list[FocusScorePoint]
+
+
+class DomainCount(BaseModel):
+    domain: str
+    count: int
+
+
+class DistractionStats(BaseModel):
+    days: int
+    total_attempts: int
+    top_domains: list[DomainCount]
+    # 24 значения: попытки по часу суток в часовом поясе пользователя
+    by_hour: list[int]
+    peak_hour: int | None
+    # медиана session_minute — «обычно срываешься на N-й минуте»
+    typical_session_minute: int | None
