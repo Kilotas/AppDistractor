@@ -141,7 +141,7 @@ backend/
     repositories/       # репозитории (async)
     services/           # бизнес-логика
     unit_of_work/       # SQLAlchemyUoW (UoW паттерн)
-    exceptions.py       # NotFoundError, ConflictError, AuthError, ForbiddenError, PaymentRequiredError
+    exceptions.py       # BadRequestError, NotFoundError, ConflictError, AuthError (401 = разлогин на фронте), ForbiddenError, PaymentRequiredError
   tests/                # pytest через HTTP API на Postgres (conftest.py: БД, клиент, перехват писем)
 frontend/
   src/

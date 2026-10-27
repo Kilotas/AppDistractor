@@ -57,7 +57,8 @@ async function request<T>(
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
-  if (response.status === 401) {
+  // Разлогиниваем только по протухшему токену; 401 на /auth/login и т.п. — обычная ошибка формы
+  if (response.status === 401 && authenticated) {
     clearToken();
     window.location.href = "/login";
     throw new ApiError("Сессия истекла", 401);

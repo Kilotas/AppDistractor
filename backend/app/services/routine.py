@@ -39,6 +39,8 @@ class RoutineService:
             return await self._uow.routines.get_all_for_user(user_id)
 
     async def update(self, user_id: int, routine_type: RoutineType, data: dict) -> Routine:
+        # Рутины создаются лениво; PATCH до первого GET не должен падать
+        await self.get_or_create_defaults(user_id)
         async with self._uow:
             routine = await self._uow.routines.get_by_type(user_id, routine_type)
             if routine is None:

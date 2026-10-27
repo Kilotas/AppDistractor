@@ -165,5 +165,31 @@ async def test_reset_password_rejects_recently_used_password(client, outbox):
         await client.post("/api/v1/auth/forgot-password", json={"email": "anna@example.com"})
         resp = await reset(client, last_token(outbox, "reset", "anna@example.com"))
 
-    assert resp.status_code == 401
+    assert resp.status_code == 400
     assert "уже использовался" in resp.json()["detail"]
+
+
+# --- change password -----------------------------------------------------------
+
+async def change_password(client, headers, current: str, new: str = NEW_PASSWORD):
+    return await client.post(
+        "/api/v1/auth/change-password",
+        json={"current_password": current, "new_password": new, "confirm_password": new},
+        headers=headers,
+    )
+
+
+async def test_change_password(client, user):
+    assert (await change_password(client, user, PASSWORD)).status_code == 200
+    assert (await login(client, "anna@example.com", NEW_PASSWORD)).status_code == 200
+
+
+async def test_change_password_errors_are_not_401(client, user):
+    """На 401 фронт разлогинивает — опечатка в пароле не должна выкидывать из аккаунта."""
+    wrong = await change_password(client, user, "Wrong12345")
+    assert wrong.status_code == 403
+
+    assert (await change_password(client, user, PASSWORD)).status_code == 200
+    reused = await change_password(client, user, NEW_PASSWORD, new=NEW_PASSWORD)
+    assert reused.status_code == 400
+    assert "уже использовался" in reused.json()["detail"]
