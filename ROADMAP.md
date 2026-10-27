@@ -51,12 +51,12 @@ git worktree add ../fv-popup-subtasks -b feat/popup-subtasks   # Этап 6
 
 ## Этап 1. Домен и почта
 
-- [ ] **[owner]** Купить домен (например `focusvoid.app`; Cloudflare / Porkbun / Namecheap)
-- [ ] **[owner]** Railway → Settings → Custom Domain: `focusvoid.app` → frontend, `api.focusvoid.app` → backend; CNAME в DNS
-- [ ] **[owner]** Resend → Domains → добавить домен, прописать SPF/DKIM в DNS, дождаться Verified
-- [ ] **[dev]** `backend/app/services/email.py`: отправитель `FocusVoid <noreply@focusvoid.app>` вместо `onboarding@resend.dev` (вынести в настройку `EMAIL_FROM`)
-- [ ] **[dev]** Обновить адреса: Railway env `APP_URL`, `CORS_ORIGINS`; `frontend/Dockerfile.prod` `ARG VITE_API_URL`; `extension/api.js` `DEFAULT_URL`
-- [ ] **[dev]** Обновить раздел «Прод» в `CLAUDE.md`
+- [x] **[owner]** Купить домен — **focusvoid.com** (Porkbun)
+- [x] **[owner]** Railway → Settings → Custom Domain: `focusvoid.com`/`www` → frontend, `api.focusvoid.com` → backend; CNAME в DNS
+- [x] **[owner]** Resend → Domains → добавить домен, прописать SPF/DKIM в DNS, дождаться Verified
+- [x] **[dev]** `backend/app/services/email.py`: отправитель `FocusVoid <noreply@focusvoid.com>` вместо `onboarding@resend.dev` (вынести в настройку `EMAIL_FROM`)
+- [x] **[dev]** Обновить адреса: Railway env `APP_URL`, `CORS_ORIGINS`; `frontend/Dockerfile.prod` `ARG VITE_API_URL`; `extension/api.js` `DEFAULT_URL`
+- [x] **[dev]** Обновить раздел «Прод» в `CLAUDE.md`
 
 **Готово, когда:** сайт открывается на своём домене, письмо подтверждения приходит на любой внешний ящик (Gmail, Яндекс, Mail.ru).
 
