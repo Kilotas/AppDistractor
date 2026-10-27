@@ -24,7 +24,11 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return pwd_context.verify(plain, hashed)
+    except ValueError:
+        # Старые гостевые аккаунты хранят не bcrypt-хэш, а случайный hex
+        return False
 
 
 def create_access_token(user_id: int) -> str:
@@ -111,7 +115,7 @@ class AuthService:
             guest_id = uuid.uuid4().hex[:12]
             user = User(
                 email=f"guest_{guest_id}@focusvoid.guest",
-                hashed_password=secrets.token_hex(32),
+                hashed_password=hash_password(secrets.token_hex(32)),
                 is_verified=True,
                 is_guest=True,
             )

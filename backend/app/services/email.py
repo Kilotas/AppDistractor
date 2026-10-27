@@ -109,7 +109,11 @@ async def send_reset_email(to_email: str, token: str) -> None:
         except Exception:
             logger.exception("Failed to send reset email via Resend to %s", to_email)
 
-    logger.info("[DEV] Reset link for %s: %s", to_email, link)
+    if settings.APP_ENV == "development":
+        logger.info("[DEV] Reset link for %s: %s", to_email, link)
+    else:
+        # Ссылку не логируем: по ней можно сбросить чужой пароль
+        logger.error("Reset email NOT sent to %s: no email provider succeeded", to_email)
 
 
 def _build_password_changed_html(email: str, app_url: str) -> str:
@@ -178,4 +182,7 @@ async def send_verification_email(to_email: str, token: str) -> None:
         except Exception:
             logger.exception("Failed to send email via Resend to %s", to_email)
 
-    logger.info("[DEV] Verification link for %s: %s", to_email, link)
+    if settings.APP_ENV == "development":
+        logger.info("[DEV] Verification link for %s: %s", to_email, link)
+    else:
+        logger.error("Verification email NOT sent to %s: no email provider succeeded", to_email)
