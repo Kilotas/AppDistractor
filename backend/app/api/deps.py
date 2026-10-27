@@ -28,13 +28,16 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
     uow: SQLAlchemyUoW = Depends(get_uow),
 ) -> User:
-    user_id = decode_access_token(credentials.credentials)
+    user_id, token_version = decode_access_token(credentials.credentials)
     service = AuthService(uow)
     try:
-        return await service.get_user(user_id)
+        user = await service.get_user(user_id)
     except NotFoundError:
         # Токен удалённого аккаунта: 401, чтобы фронт и расширение разлогинились
         raise AuthError("Аккаунт не найден")
+    if token_version != user.token_version:
+        raise AuthError("Пароль был изменён. Войдите снова.")
+    return user
 
 
 async def get_verified_user(current_user: User = Depends(get_current_user)) -> User:

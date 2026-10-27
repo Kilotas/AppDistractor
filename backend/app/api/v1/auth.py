@@ -104,8 +104,8 @@ async def change_password(
     current_user: User = Depends(get_current_user),
     service: AuthService = Depends(get_auth_service),
 ):
-    await service.change_password(current_user.id, data.current_password, data.new_password)
-    return {"detail": "Пароль успешно изменён"}
+    token = await service.change_password(current_user.id, data.current_password, data.new_password)
+    return {"detail": "Пароль успешно изменён", "access_token": token.access_token}
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)

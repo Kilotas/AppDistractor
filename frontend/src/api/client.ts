@@ -224,7 +224,7 @@ export const api = {
     resetPassword: (token: string, new_password: string, confirm_password: string) =>
       request<{ detail: string }>("POST", "/auth/reset-password", { token, new_password, confirm_password }, false),
     changePassword: (current_password: string, new_password: string, confirm_password: string) =>
-      request<{ detail: string }>("POST", "/auth/change-password", { current_password, new_password, confirm_password }),
+      request<{ detail: string; access_token: string }>("POST", "/auth/change-password", { current_password, new_password, confirm_password }),
   },
 
   billing: {

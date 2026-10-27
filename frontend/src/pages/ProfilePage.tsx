@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, clearToken } from "../api/client";
+import { api, clearToken, setToken } from "../api/client";
 import type { User } from "../api/client";
 import { useT } from "../i18n";
 import AppLayout from "../components/AppLayout";
@@ -63,7 +63,9 @@ export default function ProfilePage() {
 
     setSavingPwd(true);
     try {
-      await api.auth.changePassword(currentPwd, newPwd, confirmPwd);
+      // Старые токены отозваны — сохраняем новый, иначе следующий запрос разлогинит
+      const { access_token } = await api.auth.changePassword(currentPwd, newPwd, confirmPwd);
+      setToken(access_token);
       setPwdSuccess(true);
       setShowPwdForm(false);
       setCurrentPwd("");
