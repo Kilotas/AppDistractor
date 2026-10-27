@@ -32,6 +32,10 @@ const translations = {
     resendBtn: "Отправить письмо повторно",
     resendSuccess: "Письмо отправлено повторно",
     switchAccount: "Войти с другим аккаунтом",
+    noEmailLink: "Не пришло письмо?",
+    verifyEmailHint: "Введите email, который указывали при регистрации",
+    alreadyVerifiedBtn: "Я подтвердил — продолжить",
+    notVerifiedYet: "Email ещё не подтверждён. Откройте ссылку из письма",
     pwdMin: "Минимум 8 символов",
     pwdUpper: "Нужна хотя бы одна заглавная буква",
     pwdLower: "Нужна хотя бы одна строчная буква",
@@ -149,6 +153,10 @@ const translations = {
     profileConfirmPwd: "Подтвердите пароль",
     profileSavePwd: "Сохранить",
     profilePwdSuccess: "Пароль успешно изменён",
+    profileDeleteTitle: "Удалить аккаунт",
+    profileDeleteDesc: "Аккаунт и все данные — задачи, сессии, статистика, рассылки — будут удалены навсегда. Отменить это нельзя.",
+    profileDeletePwd: "Введите пароль для подтверждения",
+    profileDeleteConfirm: "Удалить навсегда",
 
     // InsightsPage
     analyzing: "Анализирую...",
@@ -187,6 +195,10 @@ const translations = {
     resendBtn: "Resend email",
     resendSuccess: "Email resent",
     switchAccount: "Login with another account",
+    noEmailLink: "Didn't get the email?",
+    verifyEmailHint: "Enter the email you signed up with",
+    alreadyVerifiedBtn: "I've verified — continue",
+    notVerifiedYet: "Email is not verified yet. Open the link from the email",
     pwdMin: "At least 8 characters",
     pwdUpper: "At least one uppercase letter required",
     pwdLower: "At least one lowercase letter required",
@@ -304,6 +316,10 @@ const translations = {
     profileConfirmPwd: "Confirm password",
     profileSavePwd: "Save",
     profilePwdSuccess: "Password changed successfully",
+    profileDeleteTitle: "Delete account",
+    profileDeleteDesc: "Your account and all data — tasks, sessions, statistics, digests — will be deleted permanently. This cannot be undone.",
+    profileDeletePwd: "Enter your password to confirm",
+    profileDeleteConfirm: "Delete permanently",
 
     // InsightsPage
     analyzing: "Analyzing...",

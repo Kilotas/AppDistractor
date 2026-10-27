@@ -3,7 +3,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.database import AsyncSessionFactory
 from app.domain.models.user import User
-from app.exceptions import AuthError, ForbiddenError
+from app.exceptions import AuthError, ForbiddenError, NotFoundError
 from app.services.auth import AuthService, decode_access_token
 from app.services.blocked_event import BlockedEventService
 from app.services.insights import InsightService
@@ -28,9 +28,16 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
     uow: SQLAlchemyUoW = Depends(get_uow),
 ) -> User:
-    user_id = decode_access_token(credentials.credentials)
+    user_id, token_version = decode_access_token(credentials.credentials)
     service = AuthService(uow)
-    return await service.get_user(user_id)
+    try:
+        user = await service.get_user(user_id)
+    except NotFoundError:
+        # Токен удалённого аккаунта: 401, чтобы фронт и расширение разлогинились
+        raise AuthError("Аккаунт не найден")
+    if token_version != user.token_version:
+        raise AuthError("Пароль был изменён. Войдите снова.")
+    return user
 
 
 async def get_verified_user(current_user: User = Depends(get_current_user)) -> User:

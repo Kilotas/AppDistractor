@@ -39,6 +39,8 @@ class RoutineService:
             return await self._uow.routines.get_all_for_user(user_id)
 
     async def update(self, user_id: int, routine_type: RoutineType, data: dict) -> Routine:
+        # Рутины создаются лениво; PATCH до первого GET не должен падать
+        await self.get_or_create_defaults(user_id)
         async with self._uow:
             routine = await self._uow.routines.get_by_type(user_id, routine_type)
             if routine is None:
@@ -57,6 +59,9 @@ class RoutineService:
             all_enabled = await self._uow.routines.get_all_enabled()
 
         for routine in all_enabled:
+            # У гостя адрес guest_*@focusvoid.guest — письма уйдут в никуда и испортят репутацию домена
+            if routine.user.is_guest:
+                continue
             local_utc_hour = (routine.hour - routine.timezone_offset) % 24
             if local_utc_hour != utc_hour:
                 continue
@@ -148,7 +153,7 @@ async def _send_email(to_email: str, subject: str, html: str) -> None:
 
 def _build_morning_html(streak: int, tasks: list) -> str:
     task_items = "".join(
-        f'<li style="color:#e2e8f0;margin-bottom:6px;">{t.title}</li>'
+        f'<li style="color:#e2e8f0;margin-bottom:6px;">{escape(t.title)}</li>'
         for t in tasks[:7]
     ) or '<li style="color:#8892a4;">Нет активных задач</li>'
 
@@ -230,7 +235,7 @@ def _build_weekly_html(
 
     task_rows = "".join(
         f"""<tr>
-            <td style="color:#e2e8f0;padding:8px 0;border-bottom:1px solid #1e2a40;">{t.title}</td>
+            <td style="color:#e2e8f0;padding:8px 0;border-bottom:1px solid #1e2a40;">{escape(t.title)}</td>
             <td style="color:#4f7df9;text-align:right;padding:8px 0;border-bottom:1px solid #1e2a40;">{t.total_minutes // 60}ч {t.total_minutes % 60}мин</td>
         </tr>"""
         for t in top_tasks

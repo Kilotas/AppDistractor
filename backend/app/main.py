@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 
 sentry_sdk.init(
     dsn="https://0f25ceebc1b118b8a99a3032cd085958@o4511966616158208.ingest.de.sentry.io/4511966629658704",
-    send_default_pii=True,
+    send_default_pii=False,
     traces_sample_rate=0.1,
 )
 
@@ -65,6 +65,10 @@ app = FastAPI(
     version="0.1.0",
     debug=settings.APP_DEBUG,
     lifespan=lifespan,
+    # Схема API на проде не нужна никому, кроме атакующего
+    docs_url=None if settings.APP_ENV == "production" else "/docs",
+    redoc_url=None if settings.APP_ENV == "production" else "/redoc",
+    openapi_url=None if settings.APP_ENV == "production" else "/openapi.json",
 )
 
 app.state.limiter = limiter

@@ -57,7 +57,8 @@ async function request<T>(
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
-  if (response.status === 401) {
+  // Разлогиниваем только по протухшему токену; 401 на /auth/login и т.п. — обычная ошибка формы
+  if (response.status === 401 && authenticated) {
     clearToken();
     window.location.href = "/login";
     throw new ApiError("Сессия истекла", 401);
@@ -78,7 +79,9 @@ export interface User {
   id: number;
   email: string;
   plan: "free" | "pro";
+  is_guest: boolean;
   trial_ends_at: string | null;
+  is_verified: boolean;
   created_at: string;
 }
 
@@ -212,6 +215,8 @@ export const api = {
     resendVerification: (email: string) =>
       request<{ detail: string }>("POST", "/auth/resend-verification", { email }, false),
     me: () => request<User>("GET", "/auth/me"),
+    deleteAccount: (password: string | null) =>
+      request<null>("DELETE", "/auth/me", { password }),
     guest: () =>
       request<{ access_token: string; token_type: string }>("POST", "/auth/guest", undefined, false),
     forgotPassword: (email: string) =>
@@ -219,7 +224,7 @@ export const api = {
     resetPassword: (token: string, new_password: string, confirm_password: string) =>
       request<{ detail: string }>("POST", "/auth/reset-password", { token, new_password, confirm_password }, false),
     changePassword: (current_password: string, new_password: string, confirm_password: string) =>
-      request<{ detail: string }>("POST", "/auth/change-password", { current_password, new_password, confirm_password }),
+      request<{ detail: string; access_token: string }>("POST", "/auth/change-password", { current_password, new_password, confirm_password }),
   },
 
   billing: {

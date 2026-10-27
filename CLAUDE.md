@@ -65,7 +65,7 @@ Frontend/Popup: POST /sessions/start (task_id)
              whitelist — BLOCK_ALL (prio 1) + allow для каждого домена (prio 2)
              blacklist — редирект только для доменов из списка (ID от 1000)
              └► юзер открыл чужой сайт → редирект на blocked/blocked.html?url=...
-                  └► tabs.onUpdated ловит blocked.html → POST /events (BlockedEvent, дедуп 5 сек)
+                  └► blocked.js шлёт BLOCKED_PAGE_OPENED → background (URL из sender.url) → POST /events (BlockedEvent, дедуп 5 сек)
 Stop: POST /sessions/{id}/stop → правила снимаются → stats / focus score / insights
 ```
 
@@ -113,14 +113,18 @@ CI (`.github/workflows/ci.yml`) на каждый PR и push в `main`: backend 
 
 Тестовый аккаунт: зарегистрируйся локально, затем выставь `is_verified=true`, `plan='pro'` вручную через psql.
 
-## Прод (Railway)
+## Прод (Railway, аккаунт kilotas234@gmail.com, проект focusvoid)
 
 ```
-frontend  https://frontend-production-cb0f.up.railway.app   (Dockerfile.prod: vite build → serve)
-backend   https://backend-production-506f.up.railway.app     (Dockerfile.prod: alembic upgrade head при старте)
-postgres  Railway plugin
+https://focusvoid.com, https://www.focusvoid.com  → frontend  (Dockerfile.prod: vite build → serve)
+https://api.focusvoid.com                         → backend   (Dockerfile.prod: alembic upgrade head при старте)
+postgres                                          Railway plugin
 ```
-- URL API зашит в `frontend/Dockerfile.prod` как `ARG VITE_API_URL` (можно переопределить build-аргументом).
+- Домен куплен на Porkbun (DNS там же): ALIAS `@` и CNAME `www`/`api` → `*.up.railway.app`, TXT `_railway-verify*`.
+- Старые адреса `frontend-production-cb0f.up.railway.app` / `backend-production-506f.up.railway.app` тоже работают.
+- Почта: Resend, домен focusvoid.com подтверждён, отправитель `EMAIL_FROM=FocusVoid <noreply@focusvoid.com>`.
+- URL API: Railway-переменная `VITE_API_URL` у frontend (build-arg), дефолт в `frontend/Dockerfile.prod`.
+- Расширение по умолчанию ходит в прод; для локальной разработки — `apiBaseUrl` в `chrome.storage.local`.
 - `frontend/nginx.conf` больше не используется прод-сборкой.
 
 ## Структура проекта
@@ -137,7 +141,7 @@ backend/
     repositories/       # репозитории (async)
     services/           # бизнес-логика
     unit_of_work/       # SQLAlchemyUoW (UoW паттерн)
-    exceptions.py       # NotFoundError, ConflictError, AuthError, ForbiddenError, PaymentRequiredError
+    exceptions.py       # BadRequestError, NotFoundError, ConflictError, AuthError (401 = разлогин на фронте), ForbiddenError, PaymentRequiredError
   tests/                # pytest через HTTP API на Postgres (conftest.py: БД, клиент, перехват писем)
 frontend/
   src/
@@ -157,11 +161,13 @@ extension/
 ```
 Готово ✅                         В работе / не хватает ⚠️               Не начато ⬜
 ───────────────────────────────  ─────────────────────────────────────  ─────────────────────────────
-Auth, guest, reset, history      Письма не доходят на проде:            Дневная цель с прогресс-баром
-Tasks / subtasks / sessions        Resend шлёт с onboarding@resend.dev
-Whitelist / blacklist + блокировка → задать YANDEX_SMTP_* на Railway
-Stats, streak, focus score         или подтвердить домен в Resend
-AI insights (код)                ANTHROPIC_API_KEY не задан на Railway
+Auth, guest, reset, history      ANTHROPIC_API_KEY не задан на Railway  Дневная цель с прогресс-баром
+Tasks / subtasks / sessions
+Whitelist / blacklist + блокировка
+Stats, streak, focus score
+AI insights (код)
+Домен focusvoid.com + SSL
+Почта с noreply@focusvoid.com
 Routines + ссылка в sidebar      LEMONSQUEEZY_* не заданы на Railway
 Архив задач                      2 отключённых тома Postgres в Railway
 График фокус-скора (recharts)      (проверить и удалить)
@@ -170,18 +176,21 @@ Billing (код)
 resend-verification по email
 Тесты backend + GitHub Actions CI
 «Что отвлекает» (дашборд, письмо)
+Страницы /privacy и /terms
+Удаление аккаунта (/profile)
+Экран /verify-email (вместо 403)
 Подзадачи в попапе расширения
 ```
 
 ### Детали готовых фич
 
-- **Auth:** JWT, email verification, rate limiting (slowapi), guest mode (`POST /auth/guest`, `is_guest=True`), forgot/reset/change password, запрет последних 5 паролей (`PasswordHistory`, `UoW.password_history`).
+- **Auth:** JWT, email verification, rate limiting (slowapi), guest mode (`POST /auth/guest`, `is_guest=True`), forgot/reset/change password, запрет последних 5 паролей (`PasswordHistory`, `UoW.password_history`). Удаление аккаунта: `DELETE /auth/me {password}` (гостю пароль не нужен; неверный пароль → 403, не 401) → `UserRepository.delete_with_data` удаляет всё явно от листьев к корню (у tasks/sessions/whitelist/blocked_events нет ON DELETE CASCADE); кнопка на `/profile`. Токен удалённого юзера → 401. В JWT лежит `ver` = `users.token_version`; смена/сброс пароля делает +1 → все старые токены (другие устройства, расширение) → 401, `change-password` возвращает новый `access_token`. Ссылка подтверждения email живёт 48 ч (`verification_expires_at`, NULL у старых ссылок = без срока).
 - **Задачи:** CRUD, архив (`is_active`), подзадачи с позициями и mini-progress (`subtask_count`, `completed_count` через LEFT JOIN), `GET /tasks/{id}/insights`.
 - **Сессии:** `GET /sessions/active` — все активные сессии одним запросом; WhitelistEntry с IDNA-кодированием; BlockedEvent.
 - **Stats:** `GET /stats/streak`, `GET /stats/daily?days=30`, `GET /stats/focus-score-history`, `GET /stats/distractions?days=30&tz_offset_minutes=180` (топ доменов, попытки по часам в поясе юзера, медиана `session_minute`; считается из `BlockedEvent`). Тот же расчёт идёт в недельное письмо (пояс из `Routine.timezone_offset`) и в промпт AI-инсайтов задачи.
-- **Frontend страницы:** `/tasks`, `/dashboard`, `/profile`, `/forgot-password`, `/reset-password`, `/routines`, `/tasks/:id/sessions`, `/sessions/:id/stats`, `/tasks/:id/insights`; `AppLayout` — sidebar.
+- **Frontend страницы:** `/verify-email` (неподтверждённый юзер; `RequireAuth` проверяет `is_verified` через `/auth/me` раз на токен), `/tasks`, `/dashboard`, `/profile`, `/forgot-password`, `/reset-password`, `/routines`, `/tasks/:id/sessions`, `/sessions/:id/stats`, `/tasks/:id/insights`; публичные `/privacy`, `/terms` (`LegalPage.tsx`, тексты RU/EN в `pages/legalContent.ts`); `AppLayout` — sidebar.
 - **LiveTimer:** тикает локально через `setInterval`, без polling.
-- **Расширение:** помодоро (focus/break/long break, SVG кольцо, notifications), звуки (Web Audio, `sounds.js`), RU/EN (своя MESSAGES система, `chrome.storage.local` key `extLang`), тёмная blocked.html со счётчиком, чек-лист подзадач на экране сессии (добавить / отметить, прогресс `2/5` и в списке задач).
+- **Расширение:** помодоро (focus/break/long break, SVG кольцо, notifications), звуки (Web Audio, `sounds.js`), RU/EN (своя MESSAGES система, `chrome.storage.local` key `extLang`), тёмная blocked.html со счётчиком, чек-лист подзадач на экране сессии (добавить / отметить, прогресс `2/5` и в списке задач). Права: `declarativeNetRequest`, `storage`, `notifications`, хосты `http(s)://*/*` (без `tabs`); ответы для кабинета стора — `docs/chrome-web-store.md`.
 - **i18n:** `useT()`, `LanguageProvider`, localStorage, строки в `frontend/src/i18n/index.tsx`.
 - **Темы:** dark/light через CSS custom properties; `#0b0f1a` фон, `#111827` карточки, `#4f7df9` акцент.
 
@@ -196,7 +205,8 @@ resend-verification по email
 | `c9e3f1a2b5d7` | add password_reset_token + password_reset_expires_at |
 | `6c60ed2bee3b` | add password_history table |
 | `d1e2f3a4b5c6` | add routines |
-| `e5f6a7b8c9d0` | add tasks.block_mode (**HEAD**) |
+| `e5f6a7b8c9d0` | add tasks.block_mode |
+| `f7a8b9c0d1e2` | add users.token_version + verification_expires_at (**HEAD**) |
 
 ## Ключевые паттерны
 

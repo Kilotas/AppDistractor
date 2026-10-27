@@ -51,19 +51,19 @@ git worktree add ../fv-popup-subtasks -b feat/popup-subtasks   # Этап 6
 
 ## Этап 1. Домен и почта
 
-- [ ] **[owner]** Купить домен (например `focusvoid.app`; Cloudflare / Porkbun / Namecheap)
-- [ ] **[owner]** Railway → Settings → Custom Domain: `focusvoid.app` → frontend, `api.focusvoid.app` → backend; CNAME в DNS
-- [ ] **[owner]** Resend → Domains → добавить домен, прописать SPF/DKIM в DNS, дождаться Verified
-- [ ] **[dev]** `backend/app/services/email.py`: отправитель `FocusVoid <noreply@focusvoid.app>` вместо `onboarding@resend.dev` (вынести в настройку `EMAIL_FROM`)
-- [ ] **[dev]** Обновить адреса: Railway env `APP_URL`, `CORS_ORIGINS`; `frontend/Dockerfile.prod` `ARG VITE_API_URL`; `extension/api.js` `DEFAULT_URL`
-- [ ] **[dev]** Обновить раздел «Прод» в `CLAUDE.md`
+- [x] **[owner]** Купить домен — **focusvoid.com** (Porkbun)
+- [x] **[owner]** Railway → Settings → Custom Domain: `focusvoid.com`/`www` → frontend, `api.focusvoid.com` → backend; CNAME в DNS
+- [x] **[owner]** Resend → Domains → добавить домен, прописать SPF/DKIM в DNS, дождаться Verified
+- [x] **[dev]** `backend/app/services/email.py`: отправитель `FocusVoid <noreply@focusvoid.com>` вместо `onboarding@resend.dev` (вынести в настройку `EMAIL_FROM`)
+- [x] **[dev]** Обновить адреса: Railway env `APP_URL`, `CORS_ORIGINS`; `frontend/Dockerfile.prod` `ARG VITE_API_URL`; `extension/api.js` `DEFAULT_URL`
+- [x] **[dev]** Обновить раздел «Прод» в `CLAUDE.md`
 
 **Готово, когда:** сайт открывается на своём домене, письмо подтверждения приходит на любой внешний ящик (Gmail, Яндекс, Mail.ru).
 
 ## Этап 2. Регистрация и основной сценарий работают для всех
 
-- [ ] **[dev]** Экран «Подтвердите email» для неподтверждённого юзера вместо голых 403: кнопка «Отправить ещё раз» (`POST /auth/resend-verification {email}` уже готов) + «Сменить аккаунт»
-- [ ] **[dev]** Ссылка «Не пришло письмо?» на странице логина
+- [x] **[dev]** Экран «Подтвердите email» для неподтверждённого юзера вместо голых 403: кнопка «Отправить ещё раз» (`POST /auth/resend-verification {email}` уже готов) + «Сменить аккаунт»
+- [x] **[dev]** Ссылка «Не пришло письмо?» на странице логина
 - [ ] **[owner]** Задать `ANTHROPIC_API_KEY` на Railway (AI insights)
 - [ ] **[dev]** Сквозная проверка на проде: регистрация → письмо → подтверждение → задача → whitelist → сессия в расширении → блокировка → статистика → insights
 - [ ] **[dev]** Sentry: проверить, что ошибки с прода доходят
@@ -93,8 +93,8 @@ git worktree add ../fv-popup-subtasks -b feat/popup-subtasks   # Этап 6
 
 ## Этап 5. Публикация расширения в Chrome Web Store
 
-- [ ] **[dev]** Страницы `/privacy` и `/terms` на фронтенде
-- [ ] **[dev]** Сузить `host_permissions` в `manifest.json`, если `<all_urls>` не нужен целиком (стор строже проверяет широкие права), описать обоснование прав
+- [x] **[dev]** Страницы `/privacy` и `/terms` на фронтенде
+- [x] **[dev]** Сузить `host_permissions` в `manifest.json`, если `<all_urls>` не нужен целиком (стор строже проверяет широкие права), описать обоснование прав
 - [ ] **[dev]** Сборка zip расширения (скрипт или GitHub Action)
 - [ ] **[owner]** Аккаунт разработчика Chrome Web Store ($5), иконки, скриншоты, описание RU/EN, отправка на ревью
 

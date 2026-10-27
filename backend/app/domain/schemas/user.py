@@ -38,6 +38,7 @@ class UserResponse(BaseModel):
     plan: UserPlan
     trial_ends_at: datetime | None
     is_guest: bool
+    is_verified: bool
     created_at: datetime
 
 
@@ -86,3 +87,8 @@ class ChangePasswordRequest(BaseModel):
                 "одну строчную и одну цифру"
             )
         return self
+
+
+class DeleteAccountRequest(BaseModel):
+    # Гостю пароль не нужен: настоящего пароля у гостевого аккаунта нет
+    password: str | None = None

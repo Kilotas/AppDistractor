@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, clearToken } from "../api/client";
+import { api, clearToken, setToken } from "../api/client";
 import type { User } from "../api/client";
 import { useT } from "../i18n";
 import AppLayout from "../components/AppLayout";
@@ -28,6 +28,11 @@ export default function ProfilePage() {
   const [pwdError, setPwdError] = useState<string | null>(null);
   const [pwdSuccess, setPwdSuccess] = useState(false);
   const [savingPwd, setSavingPwd] = useState(false);
+
+  const [showDelete, setShowDelete] = useState(false);
+  const [deletePwd, setDeletePwd] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     api.auth.me()
@@ -58,7 +63,9 @@ export default function ProfilePage() {
 
     setSavingPwd(true);
     try {
-      await api.auth.changePassword(currentPwd, newPwd, confirmPwd);
+      // Старые токены отозваны — сохраняем новый, иначе следующий запрос разлогинит
+      const { access_token } = await api.auth.changePassword(currentPwd, newPwd, confirmPwd);
+      setToken(access_token);
       setPwdSuccess(true);
       setShowPwdForm(false);
       setCurrentPwd("");
@@ -68,6 +75,20 @@ export default function ProfilePage() {
       setPwdError(err instanceof Error ? err.message : t("error"));
     } finally {
       setSavingPwd(false);
+    }
+  }
+
+  async function handleDelete(e: React.FormEvent) {
+    e.preventDefault();
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      await api.auth.deleteAccount(user?.is_guest ? null : deletePwd);
+      clearToken();
+      navigate("/login");
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : t("error"));
+      setDeleting(false);
     }
   }
 
@@ -172,6 +193,54 @@ export default function ProfilePage() {
                 setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
                 setPwdError(null);
               }}
+            >
+              {t("back")}
+            </button>
+          </div>
+        </form>
+        )}
+      </div>
+
+      {/* Удаление аккаунта */}
+      <div className={`${styles.card} ${styles.dangerCard}`}>
+        <div className={styles.pwdHeader}>
+          <div className={styles.sectionTitle}>{t("profileDeleteTitle")}</div>
+          {!showDelete && (
+            <button className={styles.btnTogglePwd} onClick={() => setShowDelete(true)}>
+              {t("profileDeleteTitle")}
+            </button>
+          )}
+        </div>
+
+        {showDelete && (
+        <form onSubmit={handleDelete} className={styles.form}>
+          <p className={styles.hint}>{t("profileDeleteDesc")}</p>
+          {!user.is_guest && (
+            <input
+              className={styles.input}
+              type="password"
+              placeholder={t("profileDeletePwd")}
+              value={deletePwd}
+              required
+              autoFocus
+              onChange={(e) => setDeletePwd(e.target.value)}
+            />
+          )}
+
+          {deleteError && <div className={styles.error}>{deleteError}</div>}
+
+          <div className={styles.formActions}>
+            <button
+              type="submit"
+              className={styles.btnDanger}
+              disabled={deleting || (!user.is_guest && !deletePwd)}
+            >
+              {deleting ? "..." : t("profileDeleteConfirm")}
+            </button>
+            <button
+              type="button"
+              className={styles.btnCancel}
+              onClick={() => { setShowDelete(false); setDeletePwd(""); setDeleteError(null); }}
             >
               {t("back")}
             </button>

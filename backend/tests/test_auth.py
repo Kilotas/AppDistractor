@@ -87,6 +87,22 @@ async def test_verify_with_unknown_token(client):
     assert resp.status_code == 401
 
 
+async def test_verify_with_expired_link(client, outbox, db_session):
+    await register(client, "anna@example.com")
+    async with db_session() as s:
+        await s.execute(
+            update(User)
+            .where(User.email == "anna@example.com")
+            .values(verification_expires_at=datetime.now(timezone.utc) - timedelta(minutes=1))
+        )
+        await s.commit()
+
+    resp = await client.post("/api/v1/auth/verify", params={"token": last_token(outbox, "verify", "anna@example.com")})
+
+    assert resp.status_code == 401
+    assert "истёк" in resp.json()["detail"]
+
+
 # --- resend verification ------------------------------------------------------
 
 async def test_resend_verification_replaces_token(client, outbox):
@@ -165,5 +181,55 @@ async def test_reset_password_rejects_recently_used_password(client, outbox):
         await client.post("/api/v1/auth/forgot-password", json={"email": "anna@example.com"})
         resp = await reset(client, last_token(outbox, "reset", "anna@example.com"))
 
-    assert resp.status_code == 401
+    assert resp.status_code == 400
     assert "уже использовался" in resp.json()["detail"]
+
+
+# --- change password -----------------------------------------------------------
+
+async def change_password(client, headers, current: str, new: str = NEW_PASSWORD):
+    return await client.post(
+        "/api/v1/auth/change-password",
+        json={"current_password": current, "new_password": new, "confirm_password": new},
+        headers=headers,
+    )
+
+
+async def test_change_password(client, user):
+    assert (await change_password(client, user, PASSWORD)).status_code == 200
+    assert (await login(client, "anna@example.com", NEW_PASSWORD)).status_code == 200
+
+
+async def test_change_password_revokes_old_tokens(client, user):
+    other_device = await login(client, "anna@example.com", PASSWORD)
+    other_headers = {"Authorization": f"Bearer {other_device.json()['access_token']}"}
+
+    changed = await change_password(client, user, PASSWORD)
+
+    assert changed.status_code == 200
+    new_headers = {"Authorization": f"Bearer {changed.json()['access_token']}"}
+    assert (await client.get("/api/v1/auth/me", headers=new_headers)).status_code == 200
+    for old in (user, other_headers):
+        assert (await client.get("/api/v1/auth/me", headers=old)).status_code == 401
+
+
+async def test_reset_password_revokes_old_tokens(client, outbox, user):
+    await client.post("/api/v1/auth/forgot-password", json={"email": "anna@example.com"})
+
+    assert (await reset(client, last_token(outbox, "reset", "anna@example.com"))).status_code == 200
+
+    assert (await client.get("/api/v1/auth/me", headers=user)).status_code == 401
+    assert (await login(client, "anna@example.com", NEW_PASSWORD)).status_code == 200
+
+
+async def test_change_password_errors_are_not_401(client, user):
+    """На 401 фронт разлогинивает — опечатка в пароле не должна выкидывать из аккаунта."""
+    wrong = await change_password(client, user, "Wrong12345")
+    assert wrong.status_code == 403
+
+    changed = await change_password(client, user, PASSWORD)
+    assert changed.status_code == 200
+    headers = {"Authorization": f"Bearer {changed.json()['access_token']}"}
+    reused = await change_password(client, headers, NEW_PASSWORD, new=NEW_PASSWORD)
+    assert reused.status_code == 400
+    assert "уже использовался" in reused.json()["detail"]

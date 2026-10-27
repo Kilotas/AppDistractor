@@ -89,10 +89,14 @@ class LemonSqueezyProvider:
         return url
 
     def verify_signature(self, raw_body: bytes, signature: str) -> bool:
-        # Если секрет не задан — dev-режим, пропускаем проверку
+        # Без секрета подпись проверить нечем. Пропускаем только локально,
+        # иначе любой POST выдал бы себе Pro.
         if not settings.LEMONSQUEEZY_WEBHOOK_SECRET:
-            logger.debug("Webhook signature check skipped (no secret configured)")
-            return True
+            if settings.APP_ENV == "development":
+                logger.debug("Webhook signature check skipped (no secret configured)")
+                return True
+            logger.error("Webhook rejected: LEMONSQUEEZY_WEBHOOK_SECRET is not configured")
+            return False
 
         expected = hmac.new(
             settings.LEMONSQUEEZY_WEBHOOK_SECRET.encode(),

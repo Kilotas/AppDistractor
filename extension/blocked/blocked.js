@@ -8,6 +8,9 @@ if (blockedUrl) {
   document.getElementById("blocked-url").textContent = blockedUrl;
 }
 
+// Сообщаем background о блокировке — он запишет событие в статистику
+chrome.runtime.sendMessage({ type: "BLOCKED_PAGE_OPENED" });
+
 // Получаем состояние сессии из background
 chrome.runtime.sendMessage({ type: "GET_STATE" }, (state) => {
   if (!state?.session) return;
