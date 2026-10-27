@@ -94,7 +94,7 @@ git worktree add ../fv-popup-subtasks -b feat/popup-subtasks   # Этап 6
 ## Этап 5. Публикация расширения в Chrome Web Store
 
 - [x] **[dev]** Страницы `/privacy` и `/terms` на фронтенде
-- [ ] **[dev]** Сузить `host_permissions` в `manifest.json`, если `<all_urls>` не нужен целиком (стор строже проверяет широкие права), описать обоснование прав
+- [x] **[dev]** Сузить `host_permissions` в `manifest.json`, если `<all_urls>` не нужен целиком (стор строже проверяет широкие права), описать обоснование прав
 - [ ] **[dev]** Сборка zip расширения (скрипт или GitHub Action)
 - [ ] **[owner]** Аккаунт разработчика Chrome Web Store ($5), иконки, скриншоты, описание RU/EN, отправка на ревью
 

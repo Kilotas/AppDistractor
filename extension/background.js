@@ -15,14 +15,14 @@ chrome.runtime.onInstalled.addListener(() => {
 // ── Сообщения от popup ────────────────────────────────
 // Popup не может напрямую вызвать API — он шлёт сообщение сюда,
 // service worker выполняет и возвращает результат.
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  handleMessage(message).then(sendResponse).catch((err) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  handleMessage(message, sender).then(sendResponse).catch((err) => {
     sendResponse({ error: err.message });
   });
   return true; // говорим Chrome что ответ будет асинхронным
 });
 
-async function handleMessage(message) {
+async function handleMessage(message, sender) {
   switch (message.type) {
     case "GET_TASKS":
       return getTasks();
@@ -56,6 +56,9 @@ async function handleMessage(message) {
         throw err;
       }
     }
+
+    case "BLOCKED_PAGE_OPENED":
+      return logBlockedPage(sender);
 
     default:
       throw new Error(`Unknown message type: ${message.type}`);
@@ -158,17 +161,19 @@ async function disableBlocking() {
 
 // ── Логирование блокировок ────────────────────────────
 // declarativeNetRequest блокирует запросы до того как они уходят,
-// но не даёт колбэк "что было заблокировано". Поэтому слушаем
-// навигацию на нашу blocked.html — это и есть сигнал о блокировке.
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status !== "loading") return;
-  if (!tab.url?.startsWith(chrome.runtime.getURL("/blocked/blocked.html"))) return;
+// но не даёт колбэк "что было заблокировано". Поэтому blocked.html при
+// открытии шлёт BLOCKED_PAGE_OPENED — это и есть сигнал о блокировке.
+// URL берём из sender.url (его подставляет Chrome), а не из тела сообщения,
+// и без разрешения "tabs".
+async function logBlockedPage(sender) {
+  if (sender.id !== chrome.runtime.id) return;
+  if (!sender.url?.startsWith(chrome.runtime.getURL("/blocked/blocked.html"))) return;
 
   const state = await getState();
   if (!state.session) return;
 
   // Достаём оригинальный URL из query-параметра (blocked.html?url=...)
-  const blockedUrl = new URL(tab.url).searchParams.get("url");
+  const blockedUrl = new URL(sender.url).searchParams.get("url");
   if (!blockedUrl) return;
 
   try {
@@ -192,7 +197,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   } catch {
     // Не критично если лог не прошёл
   }
-});
+}
 
 // ── Хелпер: читаем текущее состояние из storage ───────
 async function getState() {
