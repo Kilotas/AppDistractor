@@ -204,6 +204,23 @@
 .btnSave:disabled { opacity: 0.4; cursor: not-allowed; }
 .btnSave:not(:disabled):hover { background: var(--accent-hover); }
 
+/* ── Удаление аккаунта ───────────────────── */
+.dangerCard { border-color: var(--error); }
+
+.btnDanger {
+  padding: 9px 20px;
+  background: var(--error);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+}
+.btnDanger:disabled { opacity: 0.4; cursor: not-allowed; }
+.btnDanger:not(:disabled):hover { opacity: 0.9; }
+
 /* ── Выход ───────────────────────────────── */
 .btnLogout {
   background: none;
