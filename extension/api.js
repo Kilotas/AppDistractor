@@ -55,12 +55,27 @@ export async function register(email, password, confirmPassword) {
 }
 
 // ── Tasks ─────────────────────────────────────────────
+// /tasks/active не считает подзадачи — берём /tasks/ (там subtask_count/completed_count) и фильтруем
 export async function getTasks() {
-  return request("GET", "/tasks/active");
+  const tasks = await request("GET", "/tasks/");
+  return tasks.filter(t => t.is_active);
 }
 
 export async function getTask(taskId) {
   return request("GET", `/tasks/${taskId}`);
+}
+
+// ── Subtasks ──────────────────────────────────────────
+export async function getSubtasks(taskId) {
+  return request("GET", `/tasks/${taskId}/subtasks`);
+}
+
+export async function createSubtask(taskId, title) {
+  return request("POST", `/tasks/${taskId}/subtasks`, { title });
+}
+
+export async function updateSubtask(taskId, subtaskId, data) {
+  return request("PATCH", `/tasks/${taskId}/subtasks/${subtaskId}`, data);
 }
 
 // ── Whitelist ─────────────────────────────────────────

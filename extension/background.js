@@ -1,4 +1,7 @@
-import { getTasks, getTask, getWhitelist, startSession, stopSession, logBlockedEvent } from "./api.js";
+import {
+  getTasks, getTask, getSubtasks, createSubtask, updateSubtask,
+  getWhitelist, startSession, stopSession, logBlockedEvent,
+} from "./api.js";
 
 // ID правила блокировки "всего" — константа чтобы всегда знать какое правило удалять
 const BLOCK_ALL_RULE_ID = 1;
@@ -29,6 +32,15 @@ async function handleMessage(message, sender) {
 
     case "GET_STATE":
       return getState();
+
+    case "GET_SUBTASKS":
+      return getSubtasks(message.taskId);
+
+    case "ADD_SUBTASK":
+      return createSubtask(message.taskId, message.title);
+
+    case "TOGGLE_SUBTASK":
+      return updateSubtask(message.taskId, message.subtaskId, { is_completed: message.isCompleted });
 
     case "START_SESSION": {
       const session = await startSession(message.taskId);

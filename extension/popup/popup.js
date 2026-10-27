@@ -28,6 +28,8 @@ const MESSAGES = {
     errPwdLower: "Нужна строчная буква", errPwdDigit: "Нужна цифра",
     errNoTasks: "Нет активных задач", errLoadTasks: "Не удалось загрузить задачи:",
     taskFallback: "Задача #", pomoHint: (f, b) => `${f} мин фокус · ${b} мин перерыв`,
+    subtasksLabel: "Подзадачи", placeholderSubtask: "+ Добавить подзадачу (Enter)",
+    errSubtasks: "Не удалось обновить подзадачи:",
   },
   en: {
     tabLogin: "Login", tabRegister: "Register",
@@ -52,6 +54,8 @@ const MESSAGES = {
     errPwdLower: "Lowercase letter required", errPwdDigit: "Digit required",
     errNoTasks: "No active tasks", errLoadTasks: "Failed to load tasks:",
     taskFallback: "Task #", pomoHint: (f, b) => `${f} min focus · ${b} min break`,
+    subtasksLabel: "Subtasks", placeholderSubtask: "+ Add subtask (Enter)",
+    errSubtasks: "Failed to update subtasks:",
   },
 };
 
@@ -137,6 +141,10 @@ const els = {
   pomoDots:      document.getElementById("pomo-dots"),
   statPomo:      document.getElementById("stat-pomo"),
   pomoDone:      document.getElementById("pomo-done"),
+  subtaskList:   document.getElementById("subtask-list"),
+  subtaskInput:  document.getElementById("subtask-input"),
+  subtasksProgress: document.getElementById("subtasks-progress"),
+  subtasksError: document.getElementById("subtasks-error"),
   // Result
   btnNew:        document.getElementById("btn-new"),
   resultScore:   document.getElementById("result-score"),
@@ -389,9 +397,15 @@ async function showIdleScreen() {
 
   try {
     const tasks = await send("GET_TASKS");
-    els.taskSelect.innerHTML = tasks.length
-      ? tasks.map(t => `<option value="${t.id}">${t.title}</option>`).join("")
-      : `<option value="">${i18n("errNoTasks")}</option>`;
+    // option.text — без innerHTML, название задачи вводит пользователь
+    els.taskSelect.replaceChildren(...(tasks.length
+      ? tasks.map(t => {
+          const label = t.subtask_count ? `${t.title} · ${t.completed_count}/${t.subtask_count}` : t.title;
+          const option = new Option(label, t.id);
+          option.dataset.title = t.title;
+          return option;
+        })
+      : [new Option(i18n("errNoTasks"), "")]));
     els.btnStart.disabled = tasks.length === 0;
   } catch (err) {
     if (err.message.includes("авторизован") || err.message.includes("Сессия истекла")) {
@@ -424,7 +438,83 @@ async function showActiveScreen(sessionData) {
 
   stopTimer();
   startTimer(sessionData.startedAt);
+
+  await loadSubtasks(sessionData.taskId);
 }
+
+// ── Subtasks ───────────────────────────────────────────
+
+let subtaskTaskId = null;
+let subtasks = [];
+
+async function loadSubtasks(taskId) {
+  subtaskTaskId = taskId;
+  subtasks = [];
+  hideError(els.subtasksError);
+  renderSubtasks();
+  try {
+    subtasks = await send("GET_SUBTASKS", { taskId });
+    renderSubtasks();
+  } catch (err) {
+    showError(els.subtasksError, `${i18n("errSubtasks")} ${err.message}`);
+  }
+}
+
+function renderSubtasks() {
+  const sorted = [...subtasks].sort((a, b) => a.position - b.position);
+  els.subtaskList.replaceChildren(...sorted.map(st => {
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    label.className = st.is_completed ? "subtask-item done" : "subtask-item";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = st.is_completed;
+    checkbox.addEventListener("change", () => toggleSubtask(st, checkbox.checked));
+    const title = document.createElement("span");
+    title.textContent = st.title;
+    label.append(checkbox, title);
+    li.append(label);
+    return li;
+  }));
+  const done = subtasks.filter(st => st.is_completed).length;
+  els.subtasksProgress.textContent = subtasks.length ? `${done}/${subtasks.length}` : "";
+}
+
+async function toggleSubtask(subtask, isCompleted) {
+  hideError(els.subtasksError);
+  subtask.is_completed = isCompleted; // оптимистично
+  renderSubtasks();
+  try {
+    const updated = await send("TOGGLE_SUBTASK", {
+      taskId: subtaskTaskId, subtaskId: subtask.id, isCompleted,
+    });
+    Object.assign(subtask, updated);
+  } catch (err) {
+    subtask.is_completed = !isCompleted;
+    showError(els.subtasksError, `${i18n("errSubtasks")} ${err.message}`);
+  }
+  renderSubtasks();
+}
+
+els.subtaskInput.addEventListener("keydown", async (e) => {
+  if (e.key !== "Enter") return;
+  const title = els.subtaskInput.value.trim();
+  if (!title || !subtaskTaskId) return;
+
+  els.subtaskInput.disabled = true;
+  hideError(els.subtasksError);
+  try {
+    const created = await send("ADD_SUBTASK", { taskId: subtaskTaskId, title });
+    subtasks.push(created);
+    els.subtaskInput.value = "";
+    renderSubtasks();
+  } catch (err) {
+    showError(els.subtasksError, `${i18n("errSubtasks")} ${err.message}`);
+  } finally {
+    els.subtaskInput.disabled = false;
+    els.subtaskInput.focus();
+  }
+});
 
 // ── Result ─────────────────────────────────────────────
 
@@ -458,7 +548,7 @@ els.btnStart.addEventListener("click", async () => {
   hideError(els.idleError);
 
   try {
-    const taskTitle = els.taskSelect.options[els.taskSelect.selectedIndex].text;
+    const taskTitle = els.taskSelect.options[els.taskSelect.selectedIndex].dataset.title;
     const session = await send("START_SESSION", { taskId });
 
     await chrome.storage.local.set({

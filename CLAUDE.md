@@ -161,8 +161,8 @@ extension/
 ```
 Готово ✅                         В работе / не хватает ⚠️               Не начато ⬜
 ───────────────────────────────  ─────────────────────────────────────  ─────────────────────────────
-Auth, guest, reset, history      ANTHROPIC_API_KEY не задан на Railway  Подзадачи в попапе расширения
-Tasks / subtasks / sessions                                             Дневная цель с прогресс-баром
+Auth, guest, reset, history      ANTHROPIC_API_KEY не задан на Railway  Дневная цель с прогресс-баром
+Tasks / subtasks / sessions
 Whitelist / blacklist + блокировка
 Stats, streak, focus score
 AI insights (код)
@@ -179,6 +179,7 @@ resend-verification по email
 Страницы /privacy и /terms
 Удаление аккаунта (/profile)
 Экран /verify-email (вместо 403)
+Подзадачи в попапе расширения
 ```
 
 ### Детали готовых фич
@@ -189,7 +190,7 @@ resend-verification по email
 - **Stats:** `GET /stats/streak`, `GET /stats/daily?days=30`, `GET /stats/focus-score-history`, `GET /stats/distractions?days=30&tz_offset_minutes=180` (топ доменов, попытки по часам в поясе юзера, медиана `session_minute`; считается из `BlockedEvent`). Тот же расчёт идёт в недельное письмо (пояс из `Routine.timezone_offset`) и в промпт AI-инсайтов задачи.
 - **Frontend страницы:** `/verify-email` (неподтверждённый юзер; `RequireAuth` проверяет `is_verified` через `/auth/me` раз на токен), `/tasks`, `/dashboard`, `/profile`, `/forgot-password`, `/reset-password`, `/routines`, `/tasks/:id/sessions`, `/sessions/:id/stats`, `/tasks/:id/insights`; публичные `/privacy`, `/terms` (`LegalPage.tsx`, тексты RU/EN в `pages/legalContent.ts`); `AppLayout` — sidebar.
 - **LiveTimer:** тикает локально через `setInterval`, без polling.
-- **Расширение:** помодоро (focus/break/long break, SVG кольцо, notifications), звуки (Web Audio, `sounds.js`), RU/EN (своя MESSAGES система, `chrome.storage.local` key `extLang`), тёмная blocked.html со счётчиком. Права: `declarativeNetRequest`, `storage`, `notifications`, хосты `http(s)://*/*` (без `tabs`); ответы для кабинета стора — `docs/chrome-web-store.md`.
+- **Расширение:** помодоро (focus/break/long break, SVG кольцо, notifications), звуки (Web Audio, `sounds.js`), RU/EN (своя MESSAGES система, `chrome.storage.local` key `extLang`), тёмная blocked.html со счётчиком, чек-лист подзадач на экране сессии (добавить / отметить, прогресс `2/5` и в списке задач). Права: `declarativeNetRequest`, `storage`, `notifications`, хосты `http(s)://*/*` (без `tabs`); ответы для кабинета стора — `docs/chrome-web-store.md`.
 - **i18n:** `useT()`, `LanguageProvider`, localStorage, строки в `frontend/src/i18n/index.tsx`.
 - **Темы:** dark/light через CSS custom properties; `#0b0f1a` фон, `#111827` карточки, `#4f7df9` акцент.
 
