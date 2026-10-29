@@ -29,6 +29,9 @@ export default function ProfilePage() {
   const [pwdSuccess, setPwdSuccess] = useState(false);
   const [savingPwd, setSavingPwd] = useState(false);
 
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
   const [showDelete, setShowDelete] = useState(false);
   const [deletePwd, setDeletePwd] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -40,6 +43,18 @@ export default function ProfilePage() {
       .catch(() => { clearToken(); navigate("/login"); })
       .finally(() => setLoadingUser(false));
   }, []);
+
+  async function handleCheckout() {
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      const { url } = await api.billing.checkout();
+      window.location.href = url;
+    } catch (e: any) {
+      setCheckoutError(e.message);
+      setCheckoutLoading(false);
+    }
+  }
 
   function formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
@@ -126,6 +141,16 @@ export default function ProfilePage() {
             <div className={styles.cardValue}>{formatDate(user.created_at)}</div>
           </div>
         </div>
+
+        {/* Гостю оплата недоступна: у него нет email, на который оформить подписку */}
+        {user.plan === "free" && !user.is_guest && (
+          <>
+            <button className={styles.btnSave} onClick={handleCheckout} disabled={checkoutLoading}>
+              {checkoutLoading ? t("checkoutLoading") : t("btnUpgrade")}
+            </button>
+            {checkoutError && <div className={styles.error}>{checkoutError}</div>}
+          </>
+        )}
       </div>
 
       {/* Смена пароля */}
