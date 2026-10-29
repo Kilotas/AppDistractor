@@ -446,3 +446,33 @@ select:focus { border-color: #2563eb; }
   border-radius: 6px;
   padding: 8px 10px;
 }
+
+/* ── New task ──────────────────────────────── */
+.task-row { display: flex; gap: 6px; }
+.task-row select { flex: 1; min-width: 0; }
+
+.btn-icon {
+  flex: none;
+  width: 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #2563eb;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-icon:hover { border-color: #2563eb; }
+.btn-icon.open { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+.new-task {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+.new-task-actions { display: flex; align-items: center; gap: 12px; }
+.new-task-actions .btn { flex: 1; }

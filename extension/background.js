@@ -1,6 +1,6 @@
 import {
-  getTasks, getTask, getSubtasks, createSubtask, updateSubtask,
-  getWhitelist, startSession, stopSession, logBlockedEvent,
+  getTasks, getTask, createTask, getSubtasks, createSubtask, updateSubtask,
+  getWhitelist, replaceWhitelist, startSession, stopSession, logBlockedEvent,
 } from "./api.js";
 
 // ID правила блокировки "всего" — константа чтобы всегда знать какое правило удалять
@@ -29,6 +29,12 @@ async function handleMessage(message, sender) {
   switch (message.type) {
     case "GET_TASKS":
       return getTasks();
+
+    case "CREATE_TASK": {
+      const task = await createTask(message.title);
+      await replaceWhitelist(task.id, message.domains);
+      return task;
+    }
 
     case "GET_STATE":
       return getState();

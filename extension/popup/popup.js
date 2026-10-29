@@ -30,6 +30,12 @@ const MESSAGES = {
     taskFallback: "Задача #", pomoHint: (f, b) => `${f} мин фокус · ${b} мин перерыв`,
     subtasksLabel: "Подзадачи", placeholderSubtask: "+ Добавить подзадачу (Enter)",
     errSubtasks: "Не удалось обновить подзадачи:",
+    newTask: "Новая задача", placeholderTaskTitle: "Название задачи",
+    placeholderTaskSites: "Разрешённые сайты: github.com, docs.google.com",
+    newTaskHint: "Во время сессии откроются только эти сайты, остальные будут заблокированы.",
+    btnCreateTask: "Создать", btnCancel: "Отмена",
+    errTaskTitle: "Введи название задачи", errTaskSites: "Добавь хотя бы один разрешённый сайт",
+    errBadSites: "Не похоже на адрес сайта:", errCreateTask: "Не удалось создать задачу:",
   },
   en: {
     tabLogin: "Login", tabRegister: "Register",
@@ -56,6 +62,12 @@ const MESSAGES = {
     taskFallback: "Task #", pomoHint: (f, b) => `${f} min focus · ${b} min break`,
     subtasksLabel: "Subtasks", placeholderSubtask: "+ Add subtask (Enter)",
     errSubtasks: "Failed to update subtasks:",
+    newTask: "New task", placeholderTaskTitle: "Task name",
+    placeholderTaskSites: "Allowed sites: github.com, docs.google.com",
+    newTaskHint: "During a session only these sites will open, everything else is blocked.",
+    btnCreateTask: "Create", btnCancel: "Cancel",
+    errTaskTitle: "Enter a task name", errTaskSites: "Add at least one allowed site",
+    errBadSites: "Doesn't look like a website:", errCreateTask: "Failed to create task:",
   },
 };
 
@@ -70,6 +82,9 @@ function applyI18n() {
   });
   document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
     el.placeholder = i18n(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll("[data-i18n-title]").forEach(el => {
+    el.title = i18n(el.dataset.i18nTitle);
   });
   // Обновляем кнопку переключателя
   const btn = document.getElementById("btn-lang");
@@ -129,6 +144,13 @@ const els = {
   pomoFocus:     document.getElementById("pomo-focus"),
   pomoBreak:     document.getElementById("pomo-break"),
   pomoLong:      document.getElementById("pomo-long"),
+  btnNewTask:    document.getElementById("btn-new-task"),
+  newTaskForm:   document.getElementById("new-task-form"),
+  newTaskTitle:  document.getElementById("new-task-title"),
+  newTaskSites:  document.getElementById("new-task-sites"),
+  btnCreateTask: document.getElementById("btn-create-task"),
+  btnCancelTask: document.getElementById("btn-cancel-task"),
+  newTaskError:  document.getElementById("new-task-error"),
   // Active
   btnStop:       document.getElementById("btn-stop"),
   activeTaskName:document.getElementById("active-task-name"),
@@ -379,7 +401,7 @@ function updatePomoHint() {
   });
 });
 
-async function showIdleScreen() {
+async function showIdleScreen(selectTaskId = null) {
   showScreen("idle");
   hideError(els.idleError);
 
@@ -406,6 +428,7 @@ async function showIdleScreen() {
           return option;
         })
       : [new Option(i18n("errNoTasks"), "")]));
+    if (selectTaskId) els.taskSelect.value = String(selectTaskId);
     els.btnStart.disabled = tasks.length === 0;
   } catch (err) {
     if (err.message.includes("авторизован") || err.message.includes("Сессия истекла")) {
@@ -415,6 +438,66 @@ async function showIdleScreen() {
     }
   }
 }
+
+// ── Новая задача ───────────────────────────────────────
+
+// "https://www.GitHub.com/foo, docs.google.com" → ["github.com", "docs.google.com"]
+function parseDomains(text) {
+  const domains = new Set();
+  const invalid = [];
+  for (const raw of text.split(/[\s,;]+/)) {
+    if (!raw) continue;
+    const host = raw.toLowerCase()
+      .replace(/^[a-z][a-z0-9+.-]*:\/\//, "")
+      .split(/[/?#]/)[0]
+      .replace(/:\d+$/, "")
+      .replace(/^www\./, "");
+    if (/^[\p{L}\p{N}-]+(\.[\p{L}\p{N}-]+)+$/u.test(host)) domains.add(host);
+    else invalid.push(raw);
+  }
+  return { domains: [...domains], invalid };
+}
+
+function toggleNewTaskForm(open) {
+  els.newTaskForm.classList.toggle("hidden", !open);
+  els.btnNewTask.classList.toggle("open", open);
+  hideError(els.newTaskError);
+  if (open) {
+    els.newTaskTitle.focus();
+  } else {
+    els.newTaskTitle.value = "";
+    els.newTaskSites.value = "";
+  }
+}
+
+async function createTaskFromForm() {
+  const title = els.newTaskTitle.value.trim();
+  const { domains, invalid } = parseDomains(els.newTaskSites.value);
+  if (!title) { showError(els.newTaskError, i18n("errTaskTitle")); return; }
+  if (invalid.length) { showError(els.newTaskError, `${i18n("errBadSites")} ${invalid.join(", ")}`); return; }
+  if (!domains.length) { showError(els.newTaskError, i18n("errTaskSites")); return; }
+
+  els.btnCreateTask.disabled = true;
+  hideError(els.newTaskError);
+  try {
+    const task = await send("CREATE_TASK", { title, domains });
+    toggleNewTaskForm(false);
+    await showIdleScreen(task.id);
+  } catch (err) {
+    showError(els.newTaskError, `${i18n("errCreateTask")} ${err.message}`);
+  } finally {
+    els.btnCreateTask.disabled = false;
+  }
+}
+
+els.btnNewTask.addEventListener("click", () => {
+  toggleNewTaskForm(els.newTaskForm.classList.contains("hidden"));
+});
+els.btnCancelTask.addEventListener("click", () => toggleNewTaskForm(false));
+els.btnCreateTask.addEventListener("click", createTaskFromForm);
+[els.newTaskTitle, els.newTaskSites].forEach(input => {
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") createTaskFromForm(); });
+});
 
 // ── Active ─────────────────────────────────────────────
 
