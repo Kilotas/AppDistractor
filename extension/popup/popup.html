@@ -38,9 +38,23 @@
     <h2 class="app-title">FocusVoid</h2>
 
     <div class="section-label" data-i18n="chooseTask"></div>
-    <select id="task-select">
-      <option value="" data-i18n="loading"></option>
-    </select>
+    <div class="task-row">
+      <select id="task-select">
+        <option value="" data-i18n="loading"></option>
+      </select>
+      <button id="btn-new-task" class="btn-icon" data-i18n-title="newTask">+</button>
+    </div>
+
+    <div id="new-task-form" class="new-task hidden">
+      <input id="new-task-title" class="input" maxlength="255" data-i18n-placeholder="placeholderTaskTitle" />
+      <input id="new-task-sites" class="input" data-i18n-placeholder="placeholderTaskSites" />
+      <p class="auth-hint" data-i18n="newTaskHint"></p>
+      <div class="new-task-actions">
+        <button id="btn-create-task" class="btn btn-primary" data-i18n="btnCreateTask"></button>
+        <button id="btn-cancel-task" class="btn-link" data-i18n="btnCancel"></button>
+      </div>
+      <div id="new-task-error" class="error hidden"></div>
+    </div>
 
     <div class="pomo-row">
       <label class="pomo-switch">
@@ -92,7 +106,7 @@
     <div id="idle-error" class="error hidden"></div>
 
     <div class="bottom-row">
-      <a class="manage-link" id="manage-link" href="http://localhost:5173/tasks" target="_blank" data-i18n="manageTasks"></a>
+      <a class="manage-link" id="manage-link" href="https://focusvoid.com/tasks" target="_blank" data-i18n="manageTasks"></a>
       <button id="btn-logout" class="btn-link" data-i18n="btnLogout"></button>
     </div>
   </div>
