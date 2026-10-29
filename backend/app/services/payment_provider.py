@@ -12,14 +12,23 @@ import hashlib
 import hmac
 import json
 import logging
+from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 import httpx
 
 from app.core.config import settings
+from app.domain.models.user import UserPlan
 from app.exceptions import AppError
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class PaymentEvent:
+    """Что webhook значит для пользователя: какой план ему выставить."""
+    user_id: int
+    plan: UserPlan
 
 
 # ──────────────────────────────────────────────────────────────
@@ -36,10 +45,10 @@ class PaymentProvider(Protocol):
         """Проверяет что webhook пришёл от провайдера, а не от кого попало."""
         ...
 
-    def parse_payment_event(self, raw_body: bytes) -> int | None:
+    def parse_payment_event(self, raw_body: bytes) -> PaymentEvent | None:
         """
         Разбирает тело webhook.
-        Возвращает user_id если это успешная оплата, иначе None.
+        Возвращает PaymentEvent если событие меняет план пользователя, иначе None.
         """
         ...
 
@@ -109,21 +118,37 @@ class LemonSqueezyProvider:
             logger.warning("Webhook signature mismatch — possible spoofed request")
         return valid
 
-    def parse_payment_event(self, raw_body: bytes) -> int | None:
-        data = json.loads(raw_body)
-        event_name = data.get("meta", {}).get("event_name", "")
+    # Статусы подписки LemonSqueezy. cancelled — отменена, но оплаченный период
+    # ещё идёт: Pro остаётся до subscription_expired. past_due — платёж не прошёл,
+    # LemonSqueezy ещё повторяет попытки, поэтому доступ пока не снимаем.
+    _PRO_STATUSES = {"on_trial", "active", "past_due", "cancelled"}
+    _FREE_STATUSES = {"expired", "unpaid", "paused"}
 
-        if event_name not in ("order_created", "subscription_created"):
-            logger.debug("Webhook event ignored: %s", event_name)
+    def parse_payment_event(self, raw_body: bytes) -> PaymentEvent | None:
+        data = json.loads(raw_body)
+        meta = data.get("meta", {})
+        event_name = meta.get("event_name", "")
+        status = data.get("data", {}).get("attributes", {}).get("status")
+
+        if event_name == "order_created":
+            plan = UserPlan.FREE if status in ("pending", "failed", "refunded") else UserPlan.PRO
+        elif event_name == "order_refunded":
+            plan = UserPlan.FREE
+        elif event_name.startswith("subscription_") and status in self._PRO_STATUSES:
+            plan = UserPlan.PRO
+        elif event_name.startswith("subscription_") and status in self._FREE_STATUSES:
+            plan = UserPlan.FREE
+        else:
+            logger.debug("Webhook event ignored: %s status=%s", event_name, status)
             return None
 
-        user_id_str = data.get("meta", {}).get("custom_data", {}).get("user_id")
+        user_id_str = meta.get("custom_data", {}).get("user_id")
         if not user_id_str:
             logger.warning("Webhook event %s has no user_id in custom_data", event_name)
             return None
 
-        logger.info("Webhook payment event: %s user_id=%s", event_name, user_id_str)
-        return int(user_id_str)
+        logger.info("Webhook payment event: %s status=%s user_id=%s -> %s", event_name, status, user_id_str, plan.value)
+        return PaymentEvent(user_id=int(user_id_str), plan=plan)
 
 
 # ──────────────────────────────────────────────────────────────

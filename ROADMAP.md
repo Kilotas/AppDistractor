@@ -86,7 +86,8 @@ git worktree add ../fv-popup-subtasks -b feat/popup-subtasks   # Этап 6
 - [ ] **[owner]** Аккаунт LemonSqueezy, магазин на своём домене, продукт «FocusVoid Pro» (вариант = тариф)
 - [ ] **[owner]** На Railway: `LEMONSQUEEZY_API_KEY`, `LEMONSQUEEZY_STORE_ID`, `LEMONSQUEEZY_VARIANT_ID`, `LEMONSQUEEZY_WEBHOOK_SECRET`
 - [ ] **[owner]** LemonSqueezy → Webhooks: `https://api.focusvoid.app/api/v1/billing/webhook`
-- [ ] **[dev]** Кнопка «Перейти на Pro» на `/profile` и при `402 PaymentRequired` после триала
+- [x] **[dev]** Кнопка «Перейти на Pro» на `/profile` и при `402 PaymentRequired` после триала
+- [x] **[dev]** Вебхук обрабатывает жизненный цикл подписки: отмена (Pro до конца периода), истечение, неоплата, пауза, возобновление, возврат
 - [ ] **[dev]** Тестовая покупка в test mode → `plan=pro` в БД; тест на проверку подписи вебхука
 
 **Готово, когда:** тестовая оплата переводит юзера в Pro без ручных действий.

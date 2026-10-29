@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 from app.api.deps import get_uow, get_verified_user
-from app.domain.models.user import User, UserPlan
+from app.domain.models.user import User
 from app.services.payment_provider import get_payment_provider
 from app.unit_of_work.sqlalchemy import SQLAlchemyUoW
 
@@ -30,18 +30,19 @@ async def payment_webhook(request: Request, uow: SQLAlchemyUoW = Depends(get_uow
         logger.warning("Webhook rejected: invalid signature from %s", request.client.host if request.client else "unknown")
         return JSONResponse(status_code=400, content={"detail": "Invalid signature"})
 
-    user_id = provider.parse_payment_event(raw_body)
-    if user_id is None:
+    event = provider.parse_payment_event(raw_body)
+    if event is None:
         return {"ok": True}
 
     async with uow:
-        user = await uow.users.get_by_id(user_id)
-        if user is not None:
-            user.plan = UserPlan.PRO
+        user = await uow.users.get_by_id(event.user_id)
+        if user is None:
+            logger.warning("Webhook payment event for unknown user_id=%d", event.user_id)
+        elif user.plan != event.plan:
+            user.plan = event.plan
+            # Триал после оплаты не нужен; при снятии Pro не возвращаем его
             user.trial_ends_at = None
             await uow.commit()
-            logger.info("User upgraded to PRO: user_id=%d email=%s", user.id, user.email)
-        else:
-            logger.warning("Webhook payment event for unknown user_id=%d", user_id)
+            logger.info("User plan changed to %s: user_id=%d email=%s", event.plan.value, user.id, user.email)
 
     return {"ok": True}
